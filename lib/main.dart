@@ -1,14 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-
 import 'logo_screen.dart';
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await SystemChrome.setPreferredOrientations([
-    DeviceOrientation.landscapeLeft,
-    DeviceOrientation.landscapeRight,
-  ]);
+void main() {
   runApp(const MyApp());
 }
 
