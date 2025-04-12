@@ -57,10 +57,8 @@ class MyPlatformerGame extends FlameGame
         ),
         margin: const EdgeInsets.only(left: 50, bottom: 700), // 화면 좌측 하단에 위치
       );
-      print("Adding joystick...");
       add(_joystick!); // 조이스틱을 추가
       _player.joystick = _joystick!; // 플레이어에 조이스틱 연결
-      print("Joystick added");
     }
   }
 
@@ -72,4 +70,6 @@ class MyPlatformerGame extends FlameGame
     _player.handleKeyEvent(event, keysPressed);
     return KeyEventResult.handled;
   }
+
+  Player get player => _player;
 }
