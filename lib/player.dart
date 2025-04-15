@@ -10,10 +10,10 @@ import 'platform.dart';
 class Player extends SpriteComponent
     with HasGameRef<MyPlatformerGame>, CollisionCallbacks {
   // 중력, 점프 힘, 이동 속도 정의
-
   static const double gravity = 600;
   static const double jumpForce = -300;
   static const double speed = 200;
+
   // 속도 및 상태 변수
   double velocityY = 0; // y축 속도
   double velocityX = 0; // x축 속도
@@ -31,6 +31,7 @@ class Player extends SpriteComponent
   Player({Vector2? position}) {
     this.position = position ?? Vector2(100, 300);
   }
+
   // 컴포넌트가 로드될 때 실행됨
   @override
   Future<void> onLoad() async {
@@ -61,22 +62,20 @@ class Player extends SpriteComponent
     // 중력 적용 및 속도 계산
     velocityY += gravity * dt;
     velocityX = moveDirection.x * speed;
+
     // 위치 이동
     position.y += velocityY * dt;
     position.x += velocityX * dt;
 
     // 화면 경계 제한 처리
-    // 월드 크기에 맞춰 플레이어의 이동을 제한합니다.
     final screenWidth = gameRef.size.x;
     final screenHeight = gameRef.size.y;
 
-    // 왼쪽 끝으로 벗어나지 않도록 제한
-    if (position.x < 0) position.x = 0;
+    if (position.x < 0) position.x = 0; // 왼쪽 벗어남 방지
+    if (position.x + size.x > screenWidth)
+      position.x = screenWidth - size.x; // 오른쪽 벗어남 방지
 
-    /* 오른쪽 끝으로 벗어나지 않도록 제한
-    if (position.x + size.x > screenWidth) position.x = screenWidth - size.x;*/
-
-    // 세로 방향 충돌 및 바닥 제한
+    // 바닥에 닿았을 때 처리
     if (position.y + size.y / 2 >= screenHeight) {
       position.y = screenHeight - size.y / 2;
       velocityY = 0;
@@ -88,15 +87,18 @@ class Player extends SpriteComponent
   @override
   void onCollision(Set<Vector2> intersectionPoints, PositionComponent other) {
     super.onCollision(intersectionPoints, other);
+
     // 플랫폼 위에 착지했을 때
     if (other is Platform && velocityY > 0) {
       final bottom = position.y + size.y / 2;
       final platformTop = other.position.y - (other.size.y / 2);
       final correction = bottom - platformTop;
+
       position.y -= correction; // 위치 보정
       velocityY = 0;
       isOnGround = true;
     }
+
     // 장애물과 충돌했을 때: 처음 위치로 리셋
     if (other is Obstacle) {
       position = Vector2(100, gameRef.size.y - 150);
