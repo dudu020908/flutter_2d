@@ -11,8 +11,8 @@ class Player extends SpriteComponent
     with HasGameRef<MyPlatformerGame>, CollisionCallbacks {
   // 중력, 점프 힘, 이동 속도 정의
   static const double gravity = 600;
-  static const double jumpForce = -300;
-  static const double speed = 200;
+  static const double jumpForce = -400;
+  static const double speed = 300;
 
   // 속도 및 상태 변수
   double velocityY = 0; // y축 속도
@@ -20,6 +20,7 @@ class Player extends SpriteComponent
   bool isOnGround = false; // 바닥에 있는지 여부
 
   Vector2 moveDirection = Vector2.zero(); // 이동 방향 벡터
+  late Vector2 initialPosition;
   JoystickComponent? _joystick; // 조이스틱 컴포넌트
 
   // 외부에서 조이스틱을 주입받는 setter
@@ -36,7 +37,7 @@ class Player extends SpriteComponent
   @override
   Future<void> onLoad() async {
     sprite = await gameRef.loadSprite('player2.png'); // 플레이어 이미지 불러오기
-    size = Vector2(32, 32); // 크기 설정
+    size = Vector2.all(gameRef.size.x * 0.08); // 크기 설정
     anchor = Anchor.center; // 중심 기준으로 위치 지정
     add(RectangleHitbox()); // 사각형 히트박스 추가
   }
@@ -72,8 +73,6 @@ class Player extends SpriteComponent
     final screenHeight = gameRef.size.y;
 
     if (position.x < 0) position.x = 0; // 왼쪽 벗어남 방지
-    if (position.x + size.x > screenWidth)
-      position.x = screenWidth - size.x; // 오른쪽 벗어남 방지
 
     // 바닥에 닿았을 때 처리
     if (position.y + size.y / 2 >= screenHeight) {
@@ -101,7 +100,7 @@ class Player extends SpriteComponent
 
     // 장애물과 충돌했을 때: 처음 위치로 리셋
     if (other is Obstacle) {
-      position = Vector2(100, gameRef.size.y - 150);
+      position = initialPosition.clone();
       velocityY = 0;
       isOnGround = true;
     }
