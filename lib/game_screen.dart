@@ -10,19 +10,17 @@ class GameScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final MyPlatformerGame game = MyPlatformerGame();
-
     return Scaffold(
       body: Stack(
         children: [
           GameWidget(game: game),
           if (!kIsWeb)
-            // 점프 버튼
             Positioned(
               bottom: 30,
               right: 30,
               child: GestureDetector(
                 onTap: () {
-                  game.player.jump(); // 점프 실행
+                  game.player.jump();
                 },
                 child: Container(
                   width: 70,
