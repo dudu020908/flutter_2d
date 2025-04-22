@@ -77,7 +77,7 @@ class _TutorialScreenState extends State<TutorialScreen> {
       body: Stack(
         children: [
           // ────────────────────────────────────────────────
-          // ① 실제 튜토리얼 환경: 게임 월드 + 플레이어
+          // ① 실제 튜토리얼 환경: 게임 월드 + 플레이
           GameWidget(game: _game),
 
           // ────────────────────────────────────────────────
