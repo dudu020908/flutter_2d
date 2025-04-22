@@ -128,6 +128,7 @@ class Player extends SpriteComponent
       }
 
       // 좌/우 이동
+
       if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
         moveDirection.x = -1;
       } else if (event.logicalKey == LogicalKeyboardKey.arrowRight) {
@@ -139,6 +140,7 @@ class Player extends SpriteComponent
       }
     } else if (event is KeyUpEvent) {
       // 키 뗐을 때 멈춤
+
       if ((event.logicalKey == LogicalKeyboardKey.arrowLeft &&
               moveDirection.x == -1) ||
           (event.logicalKey == LogicalKeyboardKey.arrowRight &&

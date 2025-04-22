@@ -13,6 +13,7 @@ class MainMenuScreen extends StatefulWidget {
 class _MainMenuScreenState extends State<MainMenuScreen> {
   double _scaleGame = 1.0;
   double _scaleTutorial = 1.0;
+
   double _scaleSettings = 1.0;
 
   void _onHover(bool hovering, String type) {
