@@ -3,16 +3,20 @@ import 'package:flame/collisions.dart'; // 충돌 감지를 위한 패키지
 import 'package:flame/components.dart'; // Flame의 기본 컴포넌트
 import 'package:flutter/services.dart'; // 키보드 입력 감지용
 
+import 'bomb.dart'; // 🔥 Bomb import 추가
 import 'game.dart';
 import 'obstacle.dart';
 import 'platform.dart';
 
 class Player extends SpriteComponent
     with HasGameRef<MyPlatformerGame>, CollisionCallbacks {
+  // 조건, 폭탄에 충돌 하고있는지 여부
+  Bomb? touchingBomb; // 🔥 bomb에 닿아있는지 저장하는 변수 추가
+
   // 중력, 점프 힘, 이동 속도 정의
   static const double gravity = 600;
   static const double jumpForce = -400;
-  static const double speed = 200;
+  static const double speed = 300;
 
   // 속도 및 상태 변수
   double velocityY = 0; // y축 속도
@@ -41,7 +45,7 @@ class Player extends SpriteComponent
   @override
   Future<void> onLoad() async {
     sprite = await gameRef.loadSprite('player2.png'); // 플레이어 이미지 불러오기
-    size = Vector2.all(gameRef.size.x * 0.08); // // 크기 설정
+    size = Vector2.all(gameRef.size.x * 0.08); // 크기 설정
     anchor = Anchor.center; // 중심 기준으로 위치 지정
     add(RectangleHitbox()); // 사각형 히트박스 추가
   }
@@ -84,11 +88,15 @@ class Player extends SpriteComponent
       isOnGround = true;
     }
 
-    // F 키 누르고 있는 시간 누적
+    // F 키 누르고 있는 시간 누적 (폭탄에 닿아있을 때만)
     if (gameRef.keysPressed.contains(LogicalKeyboardKey.keyF)) {
-      fKeyHeldTime += dt;
-      if (fKeyHeldTime >= 4.0 && gameRef.bomb != null) {
-        gameRef.bomb!.disarm(); // 폭탄 해제
+      if (touchingBomb != null) {
+        // 🔥 폭탄에 닿아있을 때만
+        fKeyHeldTime += dt;
+        if (fKeyHeldTime >= 4.0) {
+          touchingBomb!.disarm(); // 닿은 bomb 해체
+          fKeyHeldTime = 0.0; // 성공하면 초기화
+        }
       }
     } else {
       fKeyHeldTime = 0.0;
@@ -104,7 +112,7 @@ class Player extends SpriteComponent
       final bottom = position.y + size.y / 2;
       final platformTop = other.position.y - (other.size.y / 2);
       final correction = bottom - platformTop;
-      position.y -= correction; //위치 보정
+      position.y -= correction; // 위치 보정
       velocityY = 0;
       isOnGround = true;
     }
@@ -113,6 +121,20 @@ class Player extends SpriteComponent
       position = initialPosition.clone();
       velocityY = 0;
       isOnGround = true;
+    }
+
+    if (other is Bomb) {
+      touchingBomb = other; // 🔥 bomb과 충돌 시작하면 저장
+    }
+  }
+
+  // 충돌이 끝났을 때 호출됨
+  @override
+  void onCollisionEnd(PositionComponent other) {
+    super.onCollisionEnd(other);
+
+    if (other is Bomb && touchingBomb == other) {
+      touchingBomb = null; // 🔥 bomb과 충돌 종료하면 해제
     }
   }
 
@@ -128,7 +150,6 @@ class Player extends SpriteComponent
       }
 
       // 좌/우 이동
-
       if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
         moveDirection.x = -1;
       } else if (event.logicalKey == LogicalKeyboardKey.arrowRight) {
@@ -140,7 +161,6 @@ class Player extends SpriteComponent
       }
     } else if (event is KeyUpEvent) {
       // 키 뗐을 때 멈춤
-
       if ((event.logicalKey == LogicalKeyboardKey.arrowLeft &&
               moveDirection.x == -1) ||
           (event.logicalKey == LogicalKeyboardKey.arrowRight &&
