@@ -81,7 +81,8 @@ class GameWorld extends World {
       }
 
       // 장애물은 5개마다 배치
-      if (i % 5 == 4) {
+      // 장애물은 5개마다 배치하되, 마지막 플랫폼(폭탄 위치)에는 제외
+      if (i % 5 == 4 && i != 29) {
         final double obstacleWidth = screenSize.x * 0.02;
         final double obstacleHeight =
             screenSize.y * (0.03 + rng.nextDouble() * 0.03);
