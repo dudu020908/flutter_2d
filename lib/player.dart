@@ -1,8 +1,9 @@
 // 플레이어 클래스: 캐릭터의 움직임, 중력, 점프, 충돌 등을 담당
-import 'package:flame/collisions.dart'; // 충돌 감지를 위한 패키지
-import 'package:flame/components.dart'; // Flame의 기본 컴포넌트
-import 'package:flutter/services.dart'; // 키보드 입력 감지용
+import 'package:flame/collisions.dart';
+import 'package:flame/components.dart';
+import 'package:flutter/services.dart';
 
+import 'bomb.dart';
 import 'game.dart';
 import 'moving_platform.dart';
 import 'obstacle.dart';
@@ -11,12 +12,10 @@ import 'vanishing_platform.dart';
 
 class Player extends SpriteComponent
     with HasGameRef<MyPlatformerGame>, CollisionCallbacks {
-  // 중력, 점프 힘, 이동 속도 정의
   static const double gravity = 600;
   static const double jumpForce = -400;
-  static const double speed = 300;
+  static const double speed = 1000;
 
-  // 속도 및 상태 변수
   double velocityY = 0;
   double velocityX = 0;
   bool isOnGround = false;
@@ -27,7 +26,8 @@ class Player extends SpriteComponent
   JoystickComponent? _joystick;
   int tutorialMoves = 0;
 
-  Platform? currentPlatform; // 현재 밟고 있는 발판
+  Platform? currentPlatform;
+  Bomb? touchingBomb;
 
   set joystick(JoystickComponent joystick) {
     _joystick = joystick;
@@ -56,7 +56,6 @@ class Player extends SpriteComponent
   void update(double dt) {
     super.update(dt);
 
-    // 움직이는 발판 위에 있다면 함께 이동
     if (currentPlatform is MovingPlatform) {
       final delta = (currentPlatform as MovingPlatform).delta;
       position += delta;
@@ -81,17 +80,13 @@ class Player extends SpriteComponent
       isOnGround = true;
     }
 
+    // 🔥 F키 해체 로직
     if (gameRef.keysPressed.contains(LogicalKeyboardKey.keyF)) {
-      if (gameRef.bomb != null &&
-          (position - gameRef.bomb!.position).length < 50) {
-        fKeyHeldTime += dt;
-        if (fKeyHeldTime >= 4.0) {
-          gameRef.bomb!.disarm();
-          fKeyHeldTime = 0.0;
-        }
+      if (touchingBomb != null) {
+        touchingBomb!.updateHolding(true, dt);
       }
     } else {
-      fKeyHeldTime = 0.0;
+      gameRef.bomb.updateHolding(false, dt);
     }
   }
 
@@ -107,8 +102,7 @@ class Player extends SpriteComponent
       velocityY = 0;
       isOnGround = true;
 
-      currentPlatform = other; // 현재 발판 저장
-
+      currentPlatform = other;
       if (other is VanishingPlatform) {
         other.onPlayerTouch();
       }
@@ -119,6 +113,10 @@ class Player extends SpriteComponent
       velocityY = 0;
       isOnGround = true;
     }
+
+    if (other is Bomb) {
+      touchingBomb = other;
+    }
   }
 
   @override
@@ -127,6 +125,10 @@ class Player extends SpriteComponent
 
     if (other == currentPlatform) {
       currentPlatform = null;
+    }
+
+    if (other is Bomb && other == touchingBomb) {
+      touchingBomb = null;
     }
   }
 

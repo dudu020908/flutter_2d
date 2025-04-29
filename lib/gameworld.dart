@@ -85,7 +85,7 @@ class GameWorld extends World {
       if (i % 5 == 4 && i != 29) {
         final double obstacleWidth = screenSize.x * 0.02;
         final double obstacleHeight =
-            screenSize.y * (0.03 + rng.nextDouble() * 0.03);
+            screenSize.y * (0.03 + rng.nextDouble() * 0.01);
         final double obstacleY = platformY - obstacleHeight;
 
         await add(
