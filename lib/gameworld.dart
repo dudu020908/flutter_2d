@@ -1,10 +1,12 @@
 import 'dart:async';
 import 'dart:math';
+
 import 'package:flame/components.dart';
+
+import 'bomb.dart';
 import 'obstacle.dart';
 import 'platform.dart';
 import 'player.dart';
-import 'bomb.dart';
 
 class GameWorld extends World {
   final Player player;
@@ -59,6 +61,7 @@ class GameWorld extends World {
           ),
         );
       }
+      //염재현 나이스샷
 
       x += platformWidth + gap;
     }

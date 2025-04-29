@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+
 import 'game_screen.dart';
+import 'tutorial_screen.dart';
 
 class MainMenuScreen extends StatefulWidget {
   const MainMenuScreen({super.key});
@@ -10,12 +12,16 @@ class MainMenuScreen extends StatefulWidget {
 
 class _MainMenuScreenState extends State<MainMenuScreen> {
   double _scaleGame = 1.0;
+  double _scaleTutorial = 1.0;
+
   double _scaleSettings = 1.0;
 
   void _onHover(bool hovering, String type) {
     setState(() {
       if (type == 'game') {
         _scaleGame = hovering ? 1.1 : 1.0;
+      } else if (type == 'tutorial') {
+        _scaleTutorial = hovering ? 1.1 : 1.0;
       } else if (type == 'settings') {
         _scaleSettings = hovering ? 1.1 : 1.0;
       }
@@ -62,6 +68,43 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
                               offset: Offset(2, 2),
                               blurRadius: 4,
                               color: Colors.black45,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 30),
+
+                // 2) 튜토리얼 가이드 ← 여기에 추가
+                MouseRegion(
+                  onEnter: (_) => _onHover(true, 'tutorial'),
+                  onExit: (_) => _onHover(false, 'tutorial'),
+                  child: GestureDetector(
+                    onTap: () {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const TutorialScreen(),
+                        ),
+                      );
+                    },
+                    child: AnimatedScale(
+                      scale: _scaleTutorial,
+                      duration: const Duration(milliseconds: 200),
+                      child: const Text(
+                        '튜토리얼 가이드',
+                        style: TextStyle(
+                          fontSize: 33,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.lightBlueAccent,
+                          shadows: [
+                            Shadow(
+                              offset: Offset(2, 2),
+                              blurRadius: 4,
+                              color: Colors.black38,
                             ),
                           ],
                         ),

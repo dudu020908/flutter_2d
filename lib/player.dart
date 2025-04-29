@@ -2,10 +2,10 @@
 import 'package:flame/collisions.dart'; // 충돌 감지를 위한 패키지
 import 'package:flame/components.dart'; // Flame의 기본 컴포넌트
 import 'package:flutter/services.dart'; // 키보드 입력 감지용
+
 import 'game.dart';
 import 'obstacle.dart';
 import 'platform.dart';
-import 'bomb.dart';
 
 class Player extends SpriteComponent
     with HasGameRef<MyPlatformerGame>, CollisionCallbacks {
@@ -23,6 +23,9 @@ class Player extends SpriteComponent
   Vector2 moveDirection = Vector2.zero(); // 이동 방향 벡터
   late Vector2 initialPosition;
   JoystickComponent? _joystick; // 조이스틱 컴포넌트
+
+  // 튜토리얼용 좌/우 이동 횟수 카운터
+  int tutorialMoves = 0;
 
   // 외부에서 조이스틱을 주입받는 setter
   set joystick(JoystickComponent joystick) {
@@ -113,17 +116,31 @@ class Player extends SpriteComponent
     }
   }
 
-  // 키보드 입력 처리 (PC용)
+  /// 키보드 입력 처리 (PC)
   void handleKeyEvent(KeyEvent event, Set<LogicalKeyboardKey> keysPressed) {
     if (event is KeyDownEvent) {
+      // 좌/우 화살표 누를 때마다 카운터 증가
+      if (event.logicalKey == LogicalKeyboardKey.arrowLeft ||
+          event.logicalKey == LogicalKeyboardKey.arrowRight) {
+        tutorialMoves += 1;
+        // 디버그
+        print('🎓 tutorialMoves = $tutorialMoves');
+      }
+
+      // 좌/우 이동
+
       if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
         moveDirection.x = -1;
       } else if (event.logicalKey == LogicalKeyboardKey.arrowRight) {
         moveDirection.x = 1;
-      } else if (event.logicalKey == LogicalKeyboardKey.space) {
+      }
+      // 스페이스바 점프
+      else if (event.logicalKey == LogicalKeyboardKey.space) {
         jump();
       }
     } else if (event is KeyUpEvent) {
+      // 키 뗐을 때 멈춤
+
       if ((event.logicalKey == LogicalKeyboardKey.arrowLeft &&
               moveDirection.x == -1) ||
           (event.logicalKey == LogicalKeyboardKey.arrowRight &&
