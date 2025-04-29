@@ -3,54 +3,48 @@ import 'package:flame/collisions.dart'; // 충돌 감지를 위한 패키지
 import 'package:flame/components.dart'; // Flame의 기본 컴포넌트
 import 'package:flutter/services.dart'; // 키보드 입력 감지용
 
-import 'bomb.dart'; // 🔥 Bomb import 추가
 import 'game.dart';
+import 'moving_platform.dart';
 import 'obstacle.dart';
 import 'platform.dart';
+import 'vanishing_platform.dart';
 
 class Player extends SpriteComponent
     with HasGameRef<MyPlatformerGame>, CollisionCallbacks {
-  // 조건, 폭탄에 충돌 하고있는지 여부
-  Bomb? touchingBomb; // 🔥 bomb에 닿아있는지 저장하는 변수 추가
-
   // 중력, 점프 힘, 이동 속도 정의
   static const double gravity = 600;
   static const double jumpForce = -400;
   static const double speed = 300;
 
   // 속도 및 상태 변수
-  double velocityY = 0; // y축 속도
-  double velocityX = 0; // x축 속도
-  bool isOnGround = false; // 바닥에 있는지 여부
-  double fKeyHeldTime = 0.0; // F키 누른 시간
+  double velocityY = 0;
+  double velocityX = 0;
+  bool isOnGround = false;
+  double fKeyHeldTime = 0.0;
 
-  Vector2 moveDirection = Vector2.zero(); // 이동 방향 벡터
+  Vector2 moveDirection = Vector2.zero();
   late Vector2 initialPosition;
-  JoystickComponent? _joystick; // 조이스틱 컴포넌트
-
-  // 튜토리얼용 좌/우 이동 횟수 카운터
+  JoystickComponent? _joystick;
   int tutorialMoves = 0;
 
-  // 외부에서 조이스틱을 주입받는 setter
+  Platform? currentPlatform; // 현재 밟고 있는 발판
+
   set joystick(JoystickComponent joystick) {
     _joystick = joystick;
   }
 
-  // 생성자: 시작 위치 지정 가능
   Player({Vector2? position}) {
     this.position = position ?? Vector2(100, 300);
   }
 
-  // 컴포넌트가 로드될 때 실행됨
   @override
   Future<void> onLoad() async {
-    sprite = await gameRef.loadSprite('player2.png'); // 플레이어 이미지 불러오기
-    size = Vector2.all(gameRef.size.x * 0.08); // 크기 설정
-    anchor = Anchor.center; // 중심 기준으로 위치 지정
-    add(RectangleHitbox()); // 사각형 히트박스 추가
+    sprite = await gameRef.loadSprite('player2.png');
+    size = Vector2.all(gameRef.size.x * 0.08);
+    anchor = Anchor.center;
+    add(RectangleHitbox());
   }
 
-  // 점프 함수: 바닥에 있을 때만 점프 가능
   void jump() {
     if (isOnGround) {
       velocityY = jumpForce;
@@ -58,44 +52,42 @@ class Player extends SpriteComponent
     }
   }
 
-  // 매 프레임마다 실행되는 업데이트 함수
   @override
   void update(double dt) {
     super.update(dt);
 
-    // 조이스틱 입력이 있다면 방향 갱신
+    // 움직이는 발판 위에 있다면 함께 이동
+    if (currentPlatform is MovingPlatform) {
+      final delta = (currentPlatform as MovingPlatform).delta;
+      position += delta;
+    }
+
     if (_joystick != null) {
       moveDirection = _joystick!.relativeDelta;
     }
 
-    // 중력 적용 및 속도 계산
     velocityY += gravity * dt;
     velocityX = moveDirection.x * speed;
-
-    // 위치 이동
     position.y += velocityY * dt;
     position.x += velocityX * dt;
 
-    // 화면 경계 제한 처리
     final screenWidth = gameRef.size.x;
     final screenHeight = gameRef.size.y;
-    if (position.x < 0) position.x = 0; // 왼쪽 벗어남 방지
+    if (position.x < 0) position.x = 0;
 
-    // 바닥에 닿았을 때 처리
     if (position.y + size.y / 2 >= screenHeight) {
-      position = initialPosition.clone(); // 처음 위치로 이동
+      position = initialPosition.clone();
       velocityY = 0;
       isOnGround = true;
     }
 
-    // F 키 누르고 있는 시간 누적 (폭탄에 닿아있을 때만)
     if (gameRef.keysPressed.contains(LogicalKeyboardKey.keyF)) {
-      if (touchingBomb != null) {
-        // 🔥 폭탄에 닿아있을 때만
+      if (gameRef.bomb != null &&
+          (position - gameRef.bomb!.position).length < 50) {
         fKeyHeldTime += dt;
         if (fKeyHeldTime >= 4.0) {
-          touchingBomb!.disarm(); // 닿은 bomb 해체
-          fKeyHeldTime = 0.0; // 성공하면 초기화
+          gameRef.bomb!.disarm();
+          fKeyHeldTime = 0.0;
         }
       }
     } else {
@@ -103,7 +95,6 @@ class Player extends SpriteComponent
     }
   }
 
-  // 충돌이 발생했을 때 호출됨
   @override
   void onCollision(Set<Vector2> intersectionPoints, PositionComponent other) {
     super.onCollision(intersectionPoints, other);
@@ -112,9 +103,15 @@ class Player extends SpriteComponent
       final bottom = position.y + size.y / 2;
       final platformTop = other.position.y - (other.size.y / 2);
       final correction = bottom - platformTop;
-      position.y -= correction; // 위치 보정
+      position.y -= correction;
       velocityY = 0;
       isOnGround = true;
+
+      currentPlatform = other; // 현재 발판 저장
+
+      if (other is VanishingPlatform) {
+        other.onPlayerTouch();
+      }
     }
 
     if (other is Obstacle) {
@@ -122,45 +119,33 @@ class Player extends SpriteComponent
       velocityY = 0;
       isOnGround = true;
     }
-
-    if (other is Bomb) {
-      touchingBomb = other; // 🔥 bomb과 충돌 시작하면 저장
-    }
   }
 
-  // 충돌이 끝났을 때 호출됨
   @override
   void onCollisionEnd(PositionComponent other) {
     super.onCollisionEnd(other);
 
-    if (other is Bomb && touchingBomb == other) {
-      touchingBomb = null; // 🔥 bomb과 충돌 종료하면 해제
+    if (other == currentPlatform) {
+      currentPlatform = null;
     }
   }
 
-  /// 키보드 입력 처리 (PC)
   void handleKeyEvent(KeyEvent event, Set<LogicalKeyboardKey> keysPressed) {
     if (event is KeyDownEvent) {
-      // 좌/우 화살표 누를 때마다 카운터 증가
       if (event.logicalKey == LogicalKeyboardKey.arrowLeft ||
           event.logicalKey == LogicalKeyboardKey.arrowRight) {
         tutorialMoves += 1;
-        // 디버그
-        print('🎓 tutorialMoves = $tutorialMoves');
+        print('🎓 tutorialMoves = \$tutorialMoves');
       }
 
-      // 좌/우 이동
       if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
         moveDirection.x = -1;
       } else if (event.logicalKey == LogicalKeyboardKey.arrowRight) {
         moveDirection.x = 1;
-      }
-      // 스페이스바 점프
-      else if (event.logicalKey == LogicalKeyboardKey.space) {
+      } else if (event.logicalKey == LogicalKeyboardKey.space) {
         jump();
       }
     } else if (event is KeyUpEvent) {
-      // 키 뗐을 때 멈춤
       if ((event.logicalKey == LogicalKeyboardKey.arrowLeft &&
               moveDirection.x == -1) ||
           (event.logicalKey == LogicalKeyboardKey.arrowRight &&

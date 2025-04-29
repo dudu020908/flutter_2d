@@ -4,9 +4,11 @@ import 'dart:math';
 import 'package:flame/components.dart';
 
 import 'bomb.dart';
+import 'moving_platform.dart';
 import 'obstacle.dart';
 import 'platform.dart';
 import 'player.dart';
+import 'vanishing_platform.dart';
 
 class GameWorld extends World {
   final Player player;
@@ -28,30 +30,61 @@ class GameWorld extends World {
 
     Platform? lastPlatform;
 
-    for (int i = 0; i < 15; i++) {
+    // 미리 지정된 특별 플랫폼 인덱스
+    final vanishingIndex = rng.nextInt(30);
+    List<int> movingIndices = [];
+    while (movingIndices.length < 2) {
+      int index = rng.nextInt(30);
+      if (index != vanishingIndex && !movingIndices.contains(index)) {
+        movingIndices.add(index);
+      }
+    }
+
+    for (int i = 0; i < 30; i++) {
       final double yOffset =
-          rng.nextDouble() * screenSize.y * 0.04 - screenSize.y * 0.02;
-      final double platformY = i == 0 ? baseY : baseY + yOffset;
+          rng.nextDouble() * screenSize.y * 0.08 - screenSize.y * 0.04;
+      final double platformY = (i == 0) ? baseY : (baseY + yOffset);
 
       final double platformWidth =
-          i == 14
+          i == 29
               ? screenSize.x * 0.25
-              : screenSize.x * (0.15 + rng.nextDouble() * 0.06);
+              : screenSize.x * (0.1 + rng.nextDouble() * 0.12);
       final double platformHeight = screenSize.y * 0.04;
-      final double gap = screenSize.x * (0.05 + rng.nextDouble() * 0.05);
+      final double gap = screenSize.x * (0.04 + rng.nextDouble() * 0.08);
 
-      final platform = Platform(
-        Vector2(x, platformY),
-        Vector2(platformWidth, platformHeight),
-      );
+      Platform platform;
+      if (i == vanishingIndex) {
+        platform = VanishingPlatform(
+          Vector2(x, platformY),
+          Vector2(platformWidth, platformHeight),
+          this,
+        );
+      } else if (movingIndices.contains(i)) {
+        Vector2 moveDir = rng.nextBool() ? Vector2(1, 0) : Vector2(0, 1);
+        platform = MovingPlatform(
+          Vector2(x, platformY),
+          Vector2(platformWidth, platformHeight),
+          moveBy: moveDir,
+          speed: 40,
+        );
+      } else {
+        platform = Platform(
+          Vector2(x, platformY),
+          Vector2(platformWidth, platformHeight),
+        );
+      }
+
       await add(platform);
 
-      if (i == 14) {
+      if (i == 29) {
         lastPlatform = platform;
-      } else if (i % 3 == 2) {
+      }
+
+      // 장애물은 5개마다 배치
+      if (i % 5 == 4) {
         final double obstacleWidth = screenSize.x * 0.02;
         final double obstacleHeight =
-            screenSize.y * (0.03 + rng.nextDouble() * 0.02);
+            screenSize.y * (0.03 + rng.nextDouble() * 0.03);
         final double obstacleY = platformY - obstacleHeight;
 
         await add(
@@ -61,7 +94,6 @@ class GameWorld extends World {
           ),
         );
       }
-      //염재현 나이스샷
 
       x += platformWidth + gap;
     }
@@ -79,6 +111,6 @@ class GameWorld extends World {
     player.position = Vector2(50, baseY - player.size.y - 1);
     player.initialPosition = Vector2(50, baseY - player.size.y - 1);
 
-    _readyCompleter.complete(); // bomb 생성 완료 알림
+    _readyCompleter.complete();
   }
 }
