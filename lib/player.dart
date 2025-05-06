@@ -24,7 +24,10 @@ class Player extends SpriteComponent
   Vector2 moveDirection = Vector2.zero();
   late Vector2 initialPosition;
   JoystickComponent? _joystick;
+  // 튜토리얼에서 떨어짐 감지용 플래그
+  bool justFallen = false;
   int tutorialMoves = 0;
+  int tutorialJumps = 0;
 
   Platform? currentPlatform;
   Bomb? touchingBomb;
@@ -75,6 +78,7 @@ class Player extends SpriteComponent
     if (position.x < 0) position.x = 0;
 
     if (position.y + size.y / 2 >= screenHeight) {
+      justFallen = true;
       position = initialPosition.clone();
       velocityY = 0;
       isOnGround = true;
@@ -134,18 +138,24 @@ class Player extends SpriteComponent
 
   void handleKeyEvent(KeyEvent event, Set<LogicalKeyboardKey> keysPressed) {
     if (event is KeyDownEvent) {
+      // 좌우 움직임 카운트
       if (event.logicalKey == LogicalKeyboardKey.arrowLeft ||
           event.logicalKey == LogicalKeyboardKey.arrowRight) {
-        tutorialMoves += 1;
-        print('🎓 tutorialMoves = \$tutorialMoves');
+        tutorialMoves += 1; // 기존
+        print('tutorialMoves = $tutorialMoves');
+      }
+      // 점프(KeyDownEvent) 카운트
+      if (event.logicalKey == LogicalKeyboardKey.space) {
+        tutorialJumps += 1;
+        print('tutorialJumps = $tutorialJumps');
+        jump();
       }
 
+      // 실제 이동 처리
       if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
         moveDirection.x = -1;
       } else if (event.logicalKey == LogicalKeyboardKey.arrowRight) {
         moveDirection.x = 1;
-      } else if (event.logicalKey == LogicalKeyboardKey.space) {
-        jump();
       }
     } else if (event is KeyUpEvent) {
       if ((event.logicalKey == LogicalKeyboardKey.arrowLeft &&

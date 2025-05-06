@@ -5,13 +5,21 @@ import 'package:flame/input.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+
 import 'background.dart';
+import 'bomb.dart';
 import 'gameworld.dart';
 import 'player.dart';
-import 'bomb.dart';
 
 class MyPlatformerGame extends FlameGame
     with HasCollisionDetection, HasKeyboardHandlerComponents {
+  // ------튜토리얼 모드-------
+  final bool isTutorial;
+  final VoidCallback? onTutorialDisarm;
+
+  MyPlatformerGame({this.isTutorial = false, this.onTutorialDisarm});
+  //-------------------------
+
   late final Player _player;
   late final GameWorld _gameWorld;
   JoystickComponent? _joystick;
@@ -26,7 +34,11 @@ class MyPlatformerGame extends FlameGame
     camera.viewport = FixedResolutionViewport(resolution: Vector2(1920, 1080));
 
     _player = Player();
-    _gameWorld = GameWorld(player: _player);
+    _gameWorld = GameWorld(
+      player: _player,
+      isTutorial: isTutorial,
+      onTutorialDisarm: onTutorialDisarm,
+    );
 
     world = _gameWorld;
     camera.world = world;
@@ -39,7 +51,12 @@ class MyPlatformerGame extends FlameGame
     camera.follow(_player, horizontalOnly: false);
 
     await _gameWorld.ready; // GameWorld 내부 bomb 생성 기다리기
-    bomb = _gameWorld.bomb!;
+    // 튜토리얼 모드면 onTutorialDisarm 콜백만 등록
+    bomb = Bomb(
+      _gameWorld.bomb!.position,
+      onTutorialDisarm: isTutorial ? onTutorialDisarm : null,
+    );
+    add(bomb);
 
     // 모바일 조이스틱 추가
     if (!kIsWeb &&

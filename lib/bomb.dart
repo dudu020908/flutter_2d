@@ -1,18 +1,22 @@
+// bomb.dart
 import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
 import 'package:flame/effects.dart';
 import 'package:flutter/material.dart';
 
-import 'game.dart'; // 게임 참조
-import 'main_menu_screen.dart'; // 메인 메뉴 화면
+import 'game.dart';
+import 'main_menu_screen.dart';
 
 class Bomb extends PositionComponent with HasGameRef<MyPlatformerGame> {
-  double heldDuration = 0; // F 키 누르고 있는 누적 시간
-  bool isDisarmed = false; // 해제 여부
+  double heldDuration = 0;
+  bool isDisarmed = false;
 
-  Bomb(Vector2 position) {
+  /// 튜토리얼 모드에서만 사용될 콜백
+  final VoidCallback? onTutorialDisarm;
+
+  Bomb(Vector2 position, {this.onTutorialDisarm}) {
     this.position = position;
-    size = Vector2(30, 30); // 폭탄 크기
+    size = Vector2(30, 30);
     anchor = Anchor.center;
     add(RectangleHitbox());
   }
@@ -20,34 +24,27 @@ class Bomb extends PositionComponent with HasGameRef<MyPlatformerGame> {
   @override
   void render(Canvas canvas) {
     super.render(canvas);
-    // 노란색 네모로 폭탄 표시
     canvas.drawRect(size.toRect(), Paint()..color = const Color(0xFFFFD700));
   }
 
-  /// 폭탄을 누르고 있을 때 호출되는 함수
   void updateHolding(bool isHolding, double dt) {
-    if (isDisarmed) return; // 이미 해제된 폭탄이면 무시
-
+    if (isDisarmed) return;
     if (isHolding) {
       heldDuration += dt;
       if (heldDuration >= 4.0) {
-        // 4초 이상 누르면
         disarm();
       }
     } else {
-      heldDuration = 0; // 누르지 않으면 시간 초기화
+      heldDuration = 0;
     }
   }
 
-  /// 폭탄 해체 함수
   void disarm() {
-    if (isDisarmed) return; // 중복 해체 방지
-
+    if (isDisarmed) return;
     isDisarmed = true;
-    print("폭탄 해체 성공!");
-    removeFromParent(); // 폭탄 제거
+    removeFromParent();
 
-    // CLUTCH! 텍스트 추가
+    // CLUTCH! 텍스트 효과
     final clutchText =
         TextComponent(
             text: 'CLUTCH!',
@@ -67,11 +64,8 @@ class Bomb extends PositionComponent with HasGameRef<MyPlatformerGame> {
             ),
           )
           ..anchor = Anchor.center
-          ..position = gameRef.size / 2; // 화면 정중앙
-
+          ..position = gameRef.size / 2;
     gameRef.add(clutchText);
-
-    // 텍스트에 커졌다 작아지는 애니메이션 추가
     clutchText.addAll([
       ScaleEffect.by(
         Vector2.all(1.5),
@@ -82,28 +76,27 @@ class Bomb extends PositionComponent with HasGameRef<MyPlatformerGame> {
           repeatCount: 2,
         ),
       ),
-      MoveByEffect(
-        Vector2(0, -30),
-        EffectController(duration: 1.2),
-      ), // 살짝 위로 떠오르기
+      MoveByEffect(Vector2(0, -30), EffectController(duration: 1.2)),
     ]);
 
-    // 2.5초 뒤 메인 메뉴로 이동
-    gameRef.add(
-      TimerComponent(
-        period: 2.5,
-        removeOnFinish: true,
-        onTick: () {
-          final context = gameRef.buildContext;
-          if (context != null) {
-            Navigator.of(context).pushReplacement(
-              MaterialPageRoute(builder: (_) => const MainMenuScreen()),
-            );
-          } else {
-            print('⚠️ context is null! 화면 전환 실패');
-          }
-        },
-      ),
-    );
+    if (onTutorialDisarm != null) {
+      // 튜토리얼 모드: 자동 전환 금지, 콜백만 호출
+      onTutorialDisarm!();
+    } else {
+      gameRef.add(
+        TimerComponent(
+          period: 2.5,
+          removeOnFinish: true,
+          onTick: () {
+            final ctx = gameRef.buildContext;
+            if (ctx != null) {
+              Navigator.of(ctx).pushReplacement(
+                MaterialPageRoute(builder: (_) => const MainMenuScreen()),
+              );
+            }
+          },
+        ),
+      );
+    }
   }
 }

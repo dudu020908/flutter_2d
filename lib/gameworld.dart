@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:flame/components.dart';
+import 'package:flutter/foundation.dart';
 
 import 'bomb.dart';
 import 'moving_platform.dart';
@@ -12,11 +13,20 @@ import 'vanishing_platform.dart';
 
 class GameWorld extends World {
   final Player player;
+
+  // 튜토리얼용 플래그 & 콜백
+  final bool isTutorial;
+  final VoidCallback? onTutorialDisarm;
+
   Bomb? bomb;
   Completer<void> _readyCompleter = Completer<void>();
   Future<void> get ready => _readyCompleter.future;
 
-  GameWorld({required this.player});
+  GameWorld({
+    required this.player,
+    this.isTutorial = false,
+    this.onTutorialDisarm,
+  });
 
   @override
   Future<void> onLoad() async {
@@ -105,7 +115,10 @@ class GameWorld extends World {
         lastPlatform.position.x + lastPlatform.size.x / 2 - 16,
         lastPlatform.position.y - 32,
       );
-      bomb = Bomb(bombPosition);
+      bomb = Bomb(
+        bombPosition,
+        onTutorialDisarm: isTutorial ? onTutorialDisarm : null,
+      );
       await add(bomb!);
     }
 
