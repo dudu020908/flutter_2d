@@ -10,7 +10,7 @@ import 'obstacle.dart';
 import 'platform.dart';
 import 'vanishing_platform.dart';
 
-class Player extends SpriteComponent
+class Player extends SpriteAnimationComponent
     with HasGameRef<MyPlatformerGame>, CollisionCallbacks {
   static const double gravity = 600;
   static const double jumpForce = -400;
@@ -29,6 +29,9 @@ class Player extends SpriteComponent
   int tutorialMoves = 0;
   int tutorialJumps = 0;
 
+  late SpriteAnimation walkAnimation;
+  late SpriteAnimation idleAnimation;
+
   Platform? currentPlatform;
   Bomb? touchingBomb;
 
@@ -42,9 +45,24 @@ class Player extends SpriteComponent
 
   @override
   Future<void> onLoad() async {
-    sprite = await gameRef.loadSprite('player2.png');
-    size = Vector2.all(gameRef.size.x * 0.08);
+    final spriteSize = Vector2.all(gameRef.size.x * 0.08);
+
+    // 걷기 애니메이션 로드
+    walkAnimation = SpriteAnimation.spriteList([
+      await gameRef.loadSprite('player3_1.png'),
+      await gameRef.loadSprite('player3_2.png'),
+      await gameRef.loadSprite('player3_3.png'),
+      await gameRef.loadSprite('player3_4.png'),
+    ], stepTime: 0.15);
+
+    // 대기 상태 애니메이션 (걷기 첫 프레임 하나만 사용)
+    idleAnimation = SpriteAnimation.spriteList([
+      await gameRef.loadSprite('player2.png'),
+    ], stepTime: 0.15);
+    animation = idleAnimation;
+    size = spriteSize;
     anchor = Anchor.center;
+
     add(RectangleHitbox());
   }
 
@@ -64,6 +82,18 @@ class Player extends SpriteComponent
       position += delta;
     }
 
+    // 애니메이션 상태 변경
+    if (moveDirection.x.abs() > 0) {
+      animation = walkAnimation;
+      if (moveDirection.x < 0) {
+        // 왼쪽 바라보게 뒤집기
+        scale.x = -1;
+      } else {
+        scale.x = 1;
+      }
+    } else {
+      animation = idleAnimation;
+    }
     if (_joystick != null) {
       moveDirection = _joystick!.relativeDelta;
     }
