@@ -137,7 +137,7 @@ class _TutorialScreenState extends State<TutorialScreen> {
           // 2) 튜토리얼 메시지
           if (tutorialStep != null) tutorialStep,
 
-          // 3) 추락 메시지
+          // 3) 맵 추락 메시지
           if (_showFallMsg)
             _msg(guideTop, '맵에서 떨어지면 초기위치로 돌아갑니다', Colors.red.withOpacity(0.8)),
 

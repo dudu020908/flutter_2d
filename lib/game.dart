@@ -12,7 +12,7 @@ import 'player.dart';
 
 class MyPlatformerGame extends FlameGame
     with HasCollisionDetection, HasKeyboardHandlerComponents {
-  // ------튜토리얼 모드-------
+  // ------튜토리얼 모드------
   final bool isTutorial;
   final VoidCallback? onTutorialDisarm;
 

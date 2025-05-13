@@ -90,7 +90,7 @@ class Player extends SpriteComponent
         touchingBomb!.updateHolding(true, dt);
       }
     } else {
-      gameRef.bomb.updateHolding(false, dt);
+      gameRef.bomb?.updateHolding(false, dt);
     }
   }
 

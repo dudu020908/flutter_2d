@@ -47,7 +47,7 @@ class Bomb extends PositionComponent with HasGameRef<MyPlatformerGame> {
 
     print('💥 Bomb.disarm() 호출됨 — CLUTCH 추가');
 
-    // CLUTCH! 텍스트 효과
+    // CLUTCH!! 텍스트 효과
     final clutchText =
         TextComponent(
             text: 'CLUTCH!',

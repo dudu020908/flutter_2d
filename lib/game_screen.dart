@@ -19,7 +19,7 @@ class GameScreen extends StatelessWidget {
           // 1) 게임 월드
           GameWidget(game: game),
 
-          // 2) 점프 버튼 (앱 전용)
+          // 2) 점프 버튼 (앱 실행 전용)
           if (!kIsWeb)
             Positioned(
               bottom: 30,
