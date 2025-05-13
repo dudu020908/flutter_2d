@@ -10,7 +10,7 @@ import 'obstacle.dart';
 import 'platform.dart';
 import 'vanishing_platform.dart';
 
-class Player extends SpriteComponent
+class Player extends SpriteAnimationComponent
     with HasGameRef<MyPlatformerGame>, CollisionCallbacks {
   static const double gravity = 600;
   static const double jumpForce = -400;
@@ -24,13 +24,13 @@ class Player extends SpriteComponent
   Vector2 moveDirection = Vector2.zero();
   late Vector2 initialPosition;
   JoystickComponent? _joystick;
-  // 튜토리얼에서 떨어짐 감지용 플래그
-  bool justFallen = false;
   int tutorialMoves = 0;
-  int tutorialJumps = 0;
-
+  bool justFallen = false;
   Platform? currentPlatform;
   Bomb? touchingBomb;
+
+  late SpriteAnimation walkAnimation;
+  late SpriteAnimation idleAnimation;
 
   set joystick(JoystickComponent joystick) {
     _joystick = joystick;
@@ -42,9 +42,24 @@ class Player extends SpriteComponent
 
   @override
   Future<void> onLoad() async {
-    sprite = await gameRef.loadSprite('player2.png');
-    size = Vector2.all(gameRef.size.x * 0.08);
+    final spriteSize = Vector2.all(gameRef.size.x * 0.08);
+    // 걷기 애니메이션 로드
+    walkAnimation = SpriteAnimation.spriteList([
+      await gameRef.loadSprite('player3_1.png'),
+      await gameRef.loadSprite('player3_2.png'),
+      await gameRef.loadSprite('player3_3.png'),
+      await gameRef.loadSprite('player3_4.png'),
+    ], stepTime: 0.15);
+
+    // 대기 상태 애니메이션 (걷기 첫 프레임 하나만 사용)
+    idleAnimation = SpriteAnimation.spriteList([
+      await gameRef.loadSprite('player2.png'),
+    ], stepTime: 0.15);
+
+    animation = idleAnimation;
+    size = spriteSize;
     anchor = Anchor.center;
+
     add(RectangleHitbox());
   }
 
@@ -67,7 +82,17 @@ class Player extends SpriteComponent
     if (_joystick != null) {
       moveDirection = _joystick!.relativeDelta;
     }
-
+    if (moveDirection.x.abs() > 0) {
+      animation = walkAnimation;
+      if (moveDirection.x < 0) {
+        // 왼쪽 바라보게 뒤집기
+        scale.x = -1;
+      } else {
+        scale.x = 1;
+      }
+    } else {
+      animation = idleAnimation;
+    }
     velocityY += gravity * dt;
     velocityX = moveDirection.x * speed;
     position.y += velocityY * dt;
@@ -78,7 +103,6 @@ class Player extends SpriteComponent
     if (position.x < 0) position.x = 0;
 
     if (position.y + size.y / 2 >= screenHeight) {
-      justFallen = true;
       position = initialPosition.clone();
       velocityY = 0;
       isOnGround = true;
@@ -138,24 +162,17 @@ class Player extends SpriteComponent
 
   void handleKeyEvent(KeyEvent event, Set<LogicalKeyboardKey> keysPressed) {
     if (event is KeyDownEvent) {
-      // 좌우 움직임 카운트
       if (event.logicalKey == LogicalKeyboardKey.arrowLeft ||
           event.logicalKey == LogicalKeyboardKey.arrowRight) {
-        tutorialMoves += 1; // 기존
-        print('tutorialMoves = $tutorialMoves');
-      }
-      // 점프(KeyDownEvent) 카운트
-      if (event.logicalKey == LogicalKeyboardKey.space) {
-        tutorialJumps += 1;
-        print('tutorialJumps = $tutorialJumps');
-        jump();
+        tutorialMoves += 1;
       }
 
-      // 실제 이동 처리
       if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
         moveDirection.x = -1;
       } else if (event.logicalKey == LogicalKeyboardKey.arrowRight) {
         moveDirection.x = 1;
+      } else if (event.logicalKey == LogicalKeyboardKey.space) {
+        jump();
       }
     } else if (event is KeyUpEvent) {
       if ((event.logicalKey == LogicalKeyboardKey.arrowLeft &&

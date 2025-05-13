@@ -48,6 +48,7 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^5.0.0
+  flame_test: ^1.19.1
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -61,6 +62,10 @@ flutter:
     - assets/images/player2.png
     - assets/images/Logo.png
     - assets/images/MainMenu.png
+    - assets/images/player3_1.png
+    - assets/images/player3_2.png
+    - assets/images/player3_3.png
+    - assets/images/player3_4.png
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.
