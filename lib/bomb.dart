@@ -31,6 +31,7 @@ class Bomb extends PositionComponent with HasGameRef<MyPlatformerGame> {
     if (isDisarmed) return;
     if (isHolding) {
       heldDuration += dt;
+      print('💣 Bomb.updateHolding: heldDuration=$heldDuration');
       if (heldDuration >= 4.0) {
         disarm();
       }
@@ -43,6 +44,8 @@ class Bomb extends PositionComponent with HasGameRef<MyPlatformerGame> {
     if (isDisarmed) return;
     isDisarmed = true;
     removeFromParent();
+
+    print('💥 Bomb.disarm() 호출됨 — CLUTCH 추가');
 
     // CLUTCH! 텍스트 효과
     final clutchText =
@@ -64,7 +67,8 @@ class Bomb extends PositionComponent with HasGameRef<MyPlatformerGame> {
             ),
           )
           ..anchor = Anchor.center
-          ..position = gameRef.size / 2;
+          ..position = gameRef.size / 2
+          ..priority = 100;
     gameRef.add(clutchText);
     clutchText.addAll([
       ScaleEffect.by(

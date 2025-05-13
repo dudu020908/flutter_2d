@@ -8,8 +8,12 @@ import 'package:my_platformer_game/game.dart';
 
 import 'main_menu_screen.dart';
 
+const double keyWidth = 90;
+const double keyHeight = 68;
+
 class TutorialScreen extends StatefulWidget {
   const TutorialScreen({super.key});
+
   @override
   State<TutorialScreen> createState() => _TutorialScreenState();
 }
@@ -29,11 +33,9 @@ class _TutorialScreenState extends State<TutorialScreen> {
   @override
   void initState() {
     super.initState();
-    // 튜토리얼 모드용 Game 인스턴스 (콜백 전달)
     _game = MyPlatformerGame(
       isTutorial: true,
       onTutorialDisarm: () {
-        /* 자동 전환 막음 */
         setState(() {
           _showBombInstr = false;
           _showHomeButton = true;
@@ -41,7 +43,7 @@ class _TutorialScreenState extends State<TutorialScreen> {
       },
     );
 
-    // ① 2초 뒤 인트로 숨기고 “이동+점프” 단계 시작
+    // ① 2초 뒤 이동+점프 안내
     Timer(const Duration(seconds: 2), () {
       setState(() {
         _showIntro = false;
@@ -56,7 +58,6 @@ class _TutorialScreenState extends State<TutorialScreen> {
     _moveTimer = Timer.periodic(const Duration(milliseconds: 100), (t) {
       if (_game.player.tutorialMoves >= 3 && _game.player.tutorialJumps >= 1) {
         t.cancel();
-        // ② 이동+점프 성공 → “Perfect!!” 2초 보여주고
         setState(() {
           _showMoveInstr = false;
           _showPerfect = true;
@@ -76,7 +77,6 @@ class _TutorialScreenState extends State<TutorialScreen> {
     _bombTimer = Timer.periodic(const Duration(milliseconds: 100), (t) {
       if (_game.bomb?.isDisarmed == true) {
         t.cancel();
-        // ③ 폭탄 해체 → H 버튼만 보여주기
         setState(() {
           _showBombInstr = false;
           _showHomeButton = true;
@@ -114,7 +114,8 @@ class _TutorialScreenState extends State<TutorialScreen> {
       if (_showIntro) {
         tutorialStep = _msg(guideTop, '튜토리얼을 시작합니다', Colors.black54);
       } else if (_showMoveInstr) {
-        tutorialStep = _msg(guideTop, '좌우 3회 움직이기 → 점프', Colors.black54);
+        final moveText = kIsWeb ? '좌우 3회 움직이기 → 점프' : '◀ ▶ 버튼 3회 터치 → 점프 버튼';
+        tutorialStep = _msg(guideTop, moveText, Colors.black54);
       } else if (_showPerfect) {
         tutorialStep = _msg(
           guideTop,
@@ -122,7 +123,8 @@ class _TutorialScreenState extends State<TutorialScreen> {
           Colors.green.withOpacity(0.8),
         );
       } else if (_showBombInstr) {
-        tutorialStep = _msg(guideTop, 'F키로 폭탄 해체', Colors.black54);
+        final bombText = kIsWeb ? 'F키로 폭탄 해체' : '↑ 버튼으로 폭탄 해체';
+        tutorialStep = _msg(guideTop, bombText, Colors.black54);
       }
     }
 
@@ -132,24 +134,27 @@ class _TutorialScreenState extends State<TutorialScreen> {
           // 1) 게임 월드
           GameWidget(game: _game),
 
-          // 2) 튜토리얼 단계 메시지
+          // 2) 튜토리얼 메시지
           if (tutorialStep != null) tutorialStep,
 
-          // 3) 추락 시 메시지
+          // 3) 추락 메시지
           if (_showFallMsg)
             _msg(guideTop, '맵에서 떨어지면 초기위치로 돌아갑니다', Colors.red.withOpacity(0.8)),
 
-          // 4) Web 키 가이드
+          // 4) 웹 키 가이드
           if (kIsWeb && !_showHomeButton && !_showIntro)
             Positioned(top: 16, right: 16, child: _keyGuide()),
 
-          // 5) Android 실행시 점프 버튼
+          // 5) 점프 버튼 (앱 전용)
           if (!kIsWeb)
             Positioned(
               bottom: 30,
               right: 30,
               child: GestureDetector(
-                onTap: () => _game.player.jump(),
+                onTap: () {
+                  _game.player.jump();
+                  _game.player.tutorialJumps++;
+                },
                 child: Container(
                   width: 70,
                   height: 70,
@@ -162,7 +167,66 @@ class _TutorialScreenState extends State<TutorialScreen> {
               ),
             ),
 
-          // 6) H 버튼
+          // 6) 컨트롤 패드 전체 묶음 (앱 전용)
+          if (!kIsWeb)
+            Align(
+              alignment: Alignment.bottomLeft,
+              child: Padding(
+                padding: const EdgeInsets.only(left: 20, bottom: 20),
+                child: Table(
+                  defaultColumnWidth: const FixedColumnWidth(keyWidth),
+                  defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+                  children: [
+                    // 위 방향키
+                    TableRow(
+                      children: [
+                        const SizedBox(),
+                        GestureDetector(
+                          onTapDown: (_) => _game.isHoldingBomb = true,
+                          onTapUp: (_) => _game.isHoldingBomb = false,
+                          onTapCancel: () => _game.isHoldingBomb = false,
+                          child: _keyCap(Icons.keyboard_arrow_up),
+                        ),
+                        const SizedBox(),
+                      ],
+                    ),
+                    // 왼쪽,아래,오른쪽 방향키
+                    TableRow(
+                      children: [
+                        GestureDetector(
+                          onTapDown: (_) {
+                            _game.player.moveDirection.x = -1;
+                            _game.player.tutorialMoves++;
+                          },
+                          onTapUp: (_) => _game.player.moveDirection.x = 0,
+                          onTapCancel: () => _game.player.moveDirection.x = 0,
+                          child: _keyCap(Icons.keyboard_arrow_left),
+                        ),
+                        GestureDetector(
+                          onTapDown: (_) {
+                            /* duck 로직 */
+                          },
+                          onTapUp: (_) => {},
+                          onTapCancel: () => {},
+                          child: _keyCap(Icons.keyboard_arrow_down),
+                        ),
+                        GestureDetector(
+                          onTapDown: (_) {
+                            _game.player.moveDirection.x = 1;
+                            _game.player.tutorialMoves++;
+                          },
+                          onTapUp: (_) => _game.player.moveDirection.x = 0,
+                          onTapCancel: () => _game.player.moveDirection.x = 0,
+                          child: _keyCap(Icons.keyboard_arrow_right),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+          // 7) 홈 버튼 (튜토리얼 완료 후)
           if (_showHomeButton)
             Positioned(
               top: 16,
@@ -203,12 +267,28 @@ class _TutorialScreenState extends State<TutorialScreen> {
                 ),
               ),
             ),
+          // ▲ End Tutorial UI
         ],
       ),
     );
   }
 
-  // 메시지 박스 헬퍼
+  /// 공통 컨트롤 버튼 스타일
+  Widget _keyCap(IconData icon) {
+    return Container(
+      width: keyWidth,
+      height: keyHeight,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: Colors.black26,
+        border: Border.all(color: Colors.white70, width: 1),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Icon(icon, size: keyHeight * 0.5, color: Colors.white),
+    );
+  }
+
+  /// 메시지 박스 헬퍼
   Widget _msg(double top, String text, Color bg) => Positioned(
     top: top,
     left: 0,
@@ -232,7 +312,7 @@ class _TutorialScreenState extends State<TutorialScreen> {
     ),
   );
 
-  // Web 전용 키 안내 헬퍼
+  /// 웹용 키 가이드
   Widget _keyGuide() => Row(
     mainAxisSize: MainAxisSize.min,
     children: [
