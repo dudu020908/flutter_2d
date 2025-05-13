@@ -24,7 +24,7 @@ class Player extends SpriteComponent
   Vector2 moveDirection = Vector2.zero();
   late Vector2 initialPosition;
   JoystickComponent? _joystick;
-  // 튜토리얼용 카운터
+  // 튜토리얼에서 떨어짐 감지용 플래그
   bool justFallen = false;
   int tutorialMoves = 0;
   int tutorialJumps = 0;
@@ -84,13 +84,13 @@ class Player extends SpriteComponent
       isOnGround = true;
     }
 
-    // F키 해체 또는 버튼 해체 로직
-    final holding =
-        gameRef.isHoldingBomb ||
-        gameRef.keysPressed.contains(LogicalKeyboardKey.keyF);
-
-    if (touchingBomb != null) {
-      touchingBomb!.updateHolding(holding, dt);
+    // 🔥 F키 해체 로직
+    if (gameRef.keysPressed.contains(LogicalKeyboardKey.keyF)) {
+      if (touchingBomb != null) {
+        touchingBomb!.updateHolding(true, dt);
+      }
+    } else {
+      gameRef.bomb.updateHolding(false, dt);
     }
   }
 
