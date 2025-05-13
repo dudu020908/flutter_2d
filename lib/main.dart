@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-
-import 'logo_screen.dart';
+import 'package:my_platformer_game/intro_gif.dart';
+// import 'package:my_platformer_game/intro_video.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -20,7 +20,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'My Platformer Game',
       debugShowCheckedModeBanner: false,
-      home: const LogoScreen(),
+      home: IntroGifScreen(),
     );
   }
 }
