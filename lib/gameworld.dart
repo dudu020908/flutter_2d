@@ -112,8 +112,8 @@ class GameWorld extends World {
     // 마지막 플랫폼 위에 Bomb 추가
     if (lastPlatform != null) {
       final Vector2 bombPosition = Vector2(
-        lastPlatform.position.x + lastPlatform.size.x / 2 - 16,
-        lastPlatform.position.y - 32,
+        lastPlatform.position.x + lastPlatform.size.x / 2,
+        lastPlatform.position.y,
       );
       bomb = Bomb(
         bombPosition,
