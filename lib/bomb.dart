@@ -33,12 +33,11 @@ class Bomb extends PositionComponent with HasGameRef<MyPlatformerGame> {
       );
 
       add(bombSprite);
+      add(RectangleHitbox());
 
-      // ⏲️ 타이머 UI 생성 및 추가
       timerText = BombTimerText(remaining: 60);
       await gameRef.add(timerText);
 
-      // ⏱️ 제한 시간 타이머 컴포넌트
       await gameRef.add(
         TimerComponent(
           period: 60,
@@ -46,18 +45,15 @@ class Bomb extends PositionComponent with HasGameRef<MyPlatformerGame> {
           onTick: onTimerExpired,
         ),
       );
-    } catch (e) {
-      print('❌ bomb sprite load failed: $e');
+    } catch (e, stack) {
+      print('❌ bomb sprite load failed: $e\n$stack');
     }
-
-    add(RectangleHitbox());
   }
 
   void updateHolding(bool isHolding, double dt) {
     if (isDisarmed) return;
     if (isHolding) {
       heldDuration += dt;
-      print('💣 Bomb.updateHolding: heldDuration=$heldDuration');
       if (heldDuration >= 4.0) {
         disarm();
       }
@@ -70,11 +66,13 @@ class Bomb extends PositionComponent with HasGameRef<MyPlatformerGame> {
     if (isDisarmed) return;
     isDisarmed = true;
     removeFromParent();
-    timerText.removeFromParent(); // ✅ UI 제거
+    timerText.removeFromParent();
 
-    print('💥 Bomb.disarm() 호출됨 — CLUTCH 추가');
-
-    final clutchText = ClutchText(Vector2(0, -120));
+    final clutchText = FloatingText(
+      content: 'CLUTCH!',
+      color: Colors.redAccent,
+      offset: Vector2(0, -120),
+    );
     await gameRef.add(clutchText);
 
     clutchText.addAll([
@@ -114,31 +112,13 @@ class Bomb extends PositionComponent with HasGameRef<MyPlatformerGame> {
   void onTimerExpired() {
     if (isDisarmed) return;
 
-    timerText.removeFromParent(); // ✅ 시간 초과 시 UI 제거
-    print('⏰ 제한시간 초과 - 폭탄 폭발!');
+    timerText.removeFromParent();
 
-    final boomText =
-        TextComponent(
-            text: 'GameOver!',
-            textRenderer: TextPaint(
-              style: const TextStyle(
-                fontSize: 60,
-                color: Colors.orange,
-                fontWeight: FontWeight.bold,
-                shadows: [
-                  Shadow(
-                    blurRadius: 10,
-                    color: Colors.black,
-                    offset: Offset(3, 3),
-                  ),
-                ],
-              ),
-            ),
-          )
-          ..anchor = Anchor.center
-          ..position = gameRef.size / 2 + Vector2(0, -180)
-          ..priority = 200;
-
+    final boomText = FloatingText(
+      content: 'GameOver!',
+      color: Colors.orange,
+      offset: Vector2(0, -120),
+    );
     gameRef.add(boomText);
 
     gameRef.add(
@@ -158,71 +138,68 @@ class Bomb extends PositionComponent with HasGameRef<MyPlatformerGame> {
   }
 }
 
-class BombTimerText extends TextComponent with HasGameRef<MyPlatformerGame> {
+class BombTimerText extends TextComponent {
   double remaining;
-  late TextComponent textComp;
-  BombTimerText({required this.remaining});
 
-  @override
-  Future<void> onLoad() async {
-    position = Vector2(gameRef.size.x / 2, 20);
-    anchor = Anchor.topCenter;
-    priority = 999;
-
-    textComp = TextComponent(
-      text: 'Time: ${remaining.toInt()}',
-      anchor: Anchor.center,
-      textRenderer: TextPaint(
-        style: const TextStyle(
-          fontSize: 24,
-          color: Colors.white,
-          fontWeight: FontWeight.bold,
-          shadows: [Shadow(blurRadius: 4, color: Colors.black)],
+  BombTimerText({required this.remaining})
+    : super(
+        anchor: Anchor.topCenter,
+        position: Vector2(0, 20), // 화면 상단 중앙에 고정
+        priority: 999,
+        text: '',
+        textRenderer: TextPaint(
+          style: const TextStyle(
+            fontSize: 24,
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            shadows: [Shadow(blurRadius: 4, color: Colors.black)],
+          ),
         ),
-      ),
-    );
-
-    await add(textComp);
-  }
+      );
 
   @override
   void update(double dt) {
     super.update(dt);
     remaining -= dt;
     if (remaining < 0) remaining = 0;
-    textComp.text = 'Time: ${remaining.toInt()}';
-    // 고정 위치 재설정 (카메라 무시)
-    position = Vector2(gameRef.size.x / 2, 20);
+    text = 'Time: ${remaining.toInt()}';
   }
 
   @override
   void onGameResize(Vector2 size) {
     super.onGameResize(size);
-    // 해상도 변경 시 위치 재설정
-    position = Vector2(size.x / 2, 20);
+    position = Vector2(size.x / 2, 20); // 항상 상단 중앙
   }
 }
 
-class ClutchText extends TextComponent with HasGameRef<MyPlatformerGame> {
+class FloatingText extends TextComponent with HasGameRef<MyPlatformerGame> {
+  final String content;
+  final Color color;
   final Vector2 offset;
 
-  ClutchText(this.offset)
-    : super(
-        text: 'CLUTCH!',
-        textRenderer: TextPaint(
-          style: const TextStyle(
-            fontSize: 60,
-            color: Colors.redAccent,
-            fontWeight: FontWeight.w900,
-            shadows: [
-              Shadow(blurRadius: 10, color: Colors.black, offset: Offset(3, 3)),
-            ],
-          ),
-        ),
-      ) {
-    anchor = Anchor.center;
-    priority = 100;
-  }
+  FloatingText({
+    required this.content,
+    required this.color,
+    required this.offset,
+  }) : super(
+         text: content,
+         anchor: Anchor.center,
+         priority: 200,
+         textRenderer: TextPaint(
+           style: TextStyle(
+             fontSize: 60,
+             color: color,
+             fontWeight: FontWeight.bold,
+             shadows: const [
+               Shadow(
+                 blurRadius: 10,
+                 color: Colors.black,
+                 offset: Offset(3, 3),
+               ),
+             ],
+           ),
+         ),
+       );
 
   @override
   void onGameResize(Vector2 size) {
