@@ -56,7 +56,7 @@ class _TutorialScreenState extends State<TutorialScreen> {
 
   void _startMoveJumpCheck() {
     _moveTimer = Timer.periodic(const Duration(milliseconds: 100), (t) {
-      if (_game.player.tutorialMoves >= 3 && _game.player.tutorialMoves >= 1) {
+      if (_game.player.tutorialMoves >= 3 && _game.player.tutorialJumps >= 1) {
         t.cancel();
         setState(() {
           _showMoveInstr = false;

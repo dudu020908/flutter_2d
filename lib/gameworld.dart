@@ -5,6 +5,8 @@ import 'package:flame/components.dart';
 import 'package:flutter/foundation.dart';
 
 import 'bomb.dart';
+import 'enemy.dart';
+import 'enemy_platform.dart';
 import 'moving_platform.dart';
 import 'obstacle.dart';
 import 'platform.dart';
@@ -62,18 +64,23 @@ class GameWorld extends World {
       final double gap = screenSize.x * (0.04 + rng.nextDouble() * 0.08);
 
       Platform platform;
-      if (i == vanishingIndex) {
+      if (i == 1) {
+        // **두 번째 플랫폼**: ObstaclePlatform
+        platform = EnemyPlatform(
+          Vector2(x, platformY),
+          enemyBaseSize: Vector2(screenSize.x * 0.02, screenSize.y * 0.03),
+        );
+      } else if (i == vanishingIndex) {
         platform = VanishingPlatform(
           Vector2(x, platformY),
           Vector2(platformWidth, platformHeight),
           this,
         );
       } else if (movingIndices.contains(i)) {
-        Vector2 moveDir = rng.nextBool() ? Vector2(1, 0) : Vector2(0, 1);
         platform = MovingPlatform(
           Vector2(x, platformY),
           Vector2(platformWidth, platformHeight),
-          moveBy: moveDir,
+          moveBy: rng.nextBool() ? Vector2(1, 0) : Vector2(0, 1),
           speed: 40,
         );
       } else {
@@ -82,8 +89,28 @@ class GameWorld extends World {
           Vector2(platformWidth, platformHeight),
         );
       }
-
       await add(platform);
+
+      // --- EnemyPlatform 위에 Enemy 스폰하기 ---
+      if (i == 1 && platform is EnemyPlatform) {
+        // plat 을 EnemyPlatform 으로 캐스트
+        final ep = platform as EnemyPlatform;
+        final worldTopY = ep.position.y - ep.size.y / 2;
+        final enemyH = ep.enemyBaseSize.y * 2;
+        final spawnPos = Vector2(ep.position.x, worldTopY - enemyH / 2);
+
+        final minX = ep.position.x - ep.size.x / 2;
+        final maxX = ep.position.x + ep.size.x / 2;
+
+        final enemy = Enemy(
+          position: spawnPos,
+          baseSize: ep.enemyBaseSize,
+          minX: minX,
+          maxX: maxX,
+        )..priority = ep.priority + 1;
+
+        await add(enemy);
+      }
 
       if (i == 29) {
         lastPlatform = platform;

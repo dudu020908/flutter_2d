@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
 import 'bomb.dart';
+import 'enemy.dart';
 import 'game.dart';
 import 'moving_platform.dart';
 import 'obstacle.dart';
@@ -179,14 +180,23 @@ class Player extends SpriteAnimationComponent
     }
 
     if (other is Obstacle) {
-      position = initialPosition.clone();
-      velocityY = 0;
-      isOnGround = true;
+      _resetToInitial();
+    }
+
+    if (other is Enemy) {
+      _resetToInitial();
     }
 
     if (other is Bomb) {
       touchingBomb = other;
     }
+  }
+
+  @override
+  void _resetToInitial() {
+    position = initialPosition.clone();
+    velocityY = 0;
+    isOnGround = true;
   }
 
   @override
