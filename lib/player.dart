@@ -1,7 +1,8 @@
-// 플레이어 클래스: 캐릭터의 움직임, 중력, 점프, 충돌 등을 담당
 import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
+import 'package:flame/effects.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 
 import 'bomb.dart';
 import 'game.dart';
@@ -24,10 +25,19 @@ class Player extends SpriteAnimationComponent
   Vector2 moveDirection = Vector2.zero();
   late Vector2 initialPosition;
   JoystickComponent? _joystick;
+
   // 튜토리얼에서 떨어짐 감지용 플래그
   bool justFallen = false;
   int tutorialMoves = 0;
   int tutorialJumps = 0;
+
+  bool canMove = true; // <-- 추가됨 (이동 가능 여부)
+
+  Vector2 get velocity => Vector2(velocityX, velocityY);
+  set velocity(Vector2 v) {
+    velocityX = v.x;
+    velocityY = v.y;
+  }
 
   late SpriteAnimation walkAnimation;
   late SpriteAnimation idleAnimation;
@@ -41,6 +51,31 @@ class Player extends SpriteAnimationComponent
 
   Player({Vector2? position}) {
     this.position = position ?? Vector2(100, 300);
+    initialPosition = this.position.clone();
+  }
+
+  Future<void> jumpToBomb(Vector2 bombPosition) async {
+    final destination = bombPosition.clone()..y -= 30;
+
+    moveDirection = Vector2.zero();
+    velocityX = 0;
+    velocityY = 0;
+
+    if (destination.x < position.x) {
+      scale.x = -1;
+    } else {
+      scale.x = 1;
+    }
+
+    animation = walkAnimation;
+
+    final move = MoveEffect.to(
+      destination,
+      EffectController(duration: 0.6, curve: Curves.easeOut),
+    );
+
+    await add(move); // 연출 대기
+    animation = idleAnimation;
   }
 
   @override
@@ -77,6 +112,8 @@ class Player extends SpriteAnimationComponent
   void update(double dt) {
     super.update(dt);
 
+    if (!canMove) return; // 이동 금지 시 업데이트 중단
+
     if (currentPlatform is MovingPlatform) {
       final delta = (currentPlatform as MovingPlatform).delta;
       position += delta;
@@ -86,7 +123,6 @@ class Player extends SpriteAnimationComponent
     if (moveDirection.x.abs() > 0) {
       animation = walkAnimation;
       if (moveDirection.x < 0) {
-        // 왼쪽 바라보게 뒤집기
         scale.x = -1;
       } else {
         scale.x = 1;
@@ -94,6 +130,7 @@ class Player extends SpriteAnimationComponent
     } else {
       animation = idleAnimation;
     }
+
     if (_joystick != null) {
       moveDirection = _joystick!.relativeDelta;
     }
@@ -114,7 +151,7 @@ class Player extends SpriteAnimationComponent
       isOnGround = true;
     }
 
-    // 🔥 F키 해체 로직
+    // F키 해제 로직
     if (gameRef.keysPressed.contains(LogicalKeyboardKey.keyF)) {
       if (touchingBomb != null) {
         touchingBomb!.updateHolding(true, dt);
@@ -135,7 +172,6 @@ class Player extends SpriteAnimationComponent
       position.y -= correction;
       velocityY = 0;
       isOnGround = true;
-
       currentPlatform = other;
       if (other is VanishingPlatform) {
         other.onPlayerTouch();
@@ -168,20 +204,17 @@ class Player extends SpriteAnimationComponent
 
   void handleKeyEvent(KeyEvent event, Set<LogicalKeyboardKey> keysPressed) {
     if (event is KeyDownEvent) {
-      // 좌우 움직임 카운트
       if (event.logicalKey == LogicalKeyboardKey.arrowLeft ||
           event.logicalKey == LogicalKeyboardKey.arrowRight) {
-        tutorialMoves += 1; // 기존
+        tutorialMoves += 1;
         print('tutorialMoves = $tutorialMoves');
       }
-      // 점프(KeyDownEvent) 카운트
       if (event.logicalKey == LogicalKeyboardKey.space) {
         tutorialJumps += 1;
         print('tutorialJumps = $tutorialJumps');
         jump();
       }
 
-      // 실제 이동 처리
       if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
         moveDirection.x = -1;
       } else if (event.logicalKey == LogicalKeyboardKey.arrowRight) {
