@@ -13,7 +13,6 @@ import 'vanishing_platform.dart';
 
 class GameWorld extends World {
   final Player player;
-
   // 튜토리얼용 플래그 & 콜백
   final bool isTutorial;
   final VoidCallback? onTutorialDisarm;

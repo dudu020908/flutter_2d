@@ -17,6 +17,11 @@ class MovingPlatform extends Platform {
   }) : super(position, size) {
     _lastPosition = position.clone();
   }
+  @override
+  Future<void> onLoad() async {
+    await super.onLoad();
+    sprite.sprite = await gameRef.loadSprite('moving_platform.png');
+  }
 
   @override
   void update(double dt) {

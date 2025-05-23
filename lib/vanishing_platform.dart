@@ -1,12 +1,11 @@
 import 'dart:async' as async;
+import 'dart:math';
 
 import 'package:flame/components.dart';
 
-import 'game.dart';
-import 'gameworld.dart';
 import 'platform.dart';
 
-class VanishingPlatform extends Platform with HasGameRef<MyPlatformerGame> {
+class VanishingPlatform extends Platform {
   double timeOnPlatform = 0.0;
   bool playerOn = false;
   bool isVanished = false;
@@ -21,19 +20,27 @@ class VanishingPlatform extends Platform with HasGameRef<MyPlatformerGame> {
       super(position, size);
 
   @override
+  Future<void> onLoad() async {
+    await super.onLoad();
+    sprite.sprite = await gameRef.loadSprite('vanishing_platform.png');
+  }
+
+  @override
   void update(double dt) {
     super.update(dt);
 
     if (playerOn && !isVanished) {
       timeOnPlatform += dt;
 
-      // 🔥 사라지기 직전 깜빡이기 시작
       if (timeOnPlatform >= 1.2 && timeOnPlatform < 1.5) {
-        double blinkTime = (timeOnPlatform - 1.2) * 5; // 0~1.5 구간 5배속
-        opacity = (blinkTime % 1.0) < 0.5 ? 1.0 : 0.3; // 번갈아 깜빡
+        final blinkPhase = (timeOnPlatform - 1.2) * 10 * pi;
+        sprite.opacity = 0.3 + 0.7 * ((1 + sin(blinkPhase)) / 2);
+        final scaleFactor = 0.95 + 0.1 * ((1 + sin(blinkPhase)) / 2);
+        scale.setValues(scaleFactor, scaleFactor);
       }
 
-      if (timeOnPlatform > 1.5) {
+      if (timeOnPlatform >= 1.5) {
+        scale.setValues(1.0, 1.0);
         vanish();
       }
     }
@@ -46,12 +53,12 @@ class VanishingPlatform extends Platform with HasGameRef<MyPlatformerGame> {
   void onPlayerLeave() {
     playerOn = false;
     timeOnPlatform = 0.0;
-    opacity = 1.0; // 플레이어가 떠나면 원래 투명도로 복구
+    sprite.opacity = 1.0; // 플레이어가 떠나면 원래 투명도로 복구
   }
 
   void vanish() {
     isVanished = true;
-    opacity = 1.0; // 사라질 때 다시 원래 상태로 복구
+    sprite.opacity = 1.0; // 사라질 때 다시 원래 상태로 복구
 
     final myWorld = world;
     removeFromParent();
