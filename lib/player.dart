@@ -25,7 +25,6 @@ class Player extends SpriteAnimationComponent
 
   Vector2 moveDirection = Vector2.zero();
   late Vector2 initialPosition;
-  JoystickComponent? _joystick;
 
   // 튜토리얼에서 떨어짐 감지용 플래그
   bool justFallen = false;
@@ -45,10 +44,6 @@ class Player extends SpriteAnimationComponent
 
   Platform? currentPlatform;
   Bomb? touchingBomb;
-
-  set joystick(JoystickComponent joystick) {
-    _joystick = joystick;
-  }
 
   Player({Vector2? position}) {
     this.position = position ?? Vector2(100, 300);
@@ -113,8 +108,6 @@ class Player extends SpriteAnimationComponent
   void update(double dt) {
     super.update(dt);
 
-    if (!canMove) return; // 이동 금지 시 업데이트 중단
-
     if (currentPlatform is MovingPlatform) {
       final delta = (currentPlatform as MovingPlatform).delta;
       position += delta;
@@ -130,10 +123,6 @@ class Player extends SpriteAnimationComponent
       }
     } else {
       animation = idleAnimation;
-    }
-
-    if (_joystick != null) {
-      moveDirection = _joystick!.relativeDelta;
     }
 
     velocityY += gravity * dt;

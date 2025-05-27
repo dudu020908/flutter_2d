@@ -37,6 +37,114 @@ class GameWorld extends World {
     final screenSize = player.gameRef.size;
 
     final double baseY = screenSize.y * 0.65;
+    if (isTutorial) {
+      final baseY = screenSize.y * 0.75;
+      final double platformHeight = screenSize.y * 0.04;
+      final double gapX = screenSize.x * 0.18;
+      final double gapY = screenSize.y * 0.09;
+
+      final List<PositionComponent> tutorialPlatforms = [];
+
+      // 0. 일반 플랫폼 (시작)
+      tutorialPlatforms.add(
+        Platform(
+          Vector2(50, baseY),
+          Vector2(screenSize.x * 0.2, platformHeight),
+        ),
+      );
+
+      // 1. MovingPlatform
+      tutorialPlatforms.add(
+        MovingPlatform(
+          Vector2(130 + gapX * 1, baseY - gapY * 1),
+          Vector2(screenSize.x * 0.2, platformHeight),
+          moveBy: Vector2(1, 0),
+          speed: 40,
+        ),
+      );
+
+      // 2. 일반
+      tutorialPlatforms.add(
+        Platform(
+          Vector2(80 + gapX * 2, baseY - gapY * 2),
+          Vector2(screenSize.x * 0.2, platformHeight),
+        ),
+      );
+
+      // 3. EnemyPlatform
+      tutorialPlatforms.add(
+        EnemyPlatform(
+          Vector2(160 + gapX * 3, baseY - gapY * 3),
+          enemyBaseSize: Vector2(screenSize.x * 0.025, screenSize.y * 0.03),
+        ),
+      );
+
+      // 4. 일반
+      tutorialPlatforms.add(
+        Platform(
+          Vector2(200 + gapX * 4, baseY - gapY * 2),
+          Vector2(screenSize.x * 0.2, platformHeight),
+        ),
+      );
+
+      // 5. VanishingPlatform
+      tutorialPlatforms.add(
+        VanishingPlatform(
+          Vector2(300 + gapX * 5, baseY - gapY * 1),
+          Vector2(screenSize.x * 0.2, platformHeight),
+          this,
+        ),
+      );
+
+      // 6. 마지막 플랫폼 (폭탄)
+      final lastPlatform = Platform(
+        Vector2(400 + gapX * 6, baseY),
+        Vector2(screenSize.x * 0.3, platformHeight),
+      );
+      tutorialPlatforms.add(lastPlatform);
+
+      // 플랫폼 추가
+      for (final plat in tutorialPlatforms) {
+        await add(plat);
+        if (plat is EnemyPlatform) {
+          final ep = plat;
+          final worldTopY = ep.position.y - ep.size.y / 2;
+          final enemyH = ep.enemyBaseSize.y * 2;
+          final spawnPos = Vector2(ep.position.x, worldTopY - enemyH / 2);
+
+          final minX = ep.position.x - ep.size.x / 2;
+          final maxX = ep.position.x + ep.size.x / 2;
+
+          final enemy = Enemy(
+            position: spawnPos,
+            baseSize: ep.enemyBaseSize,
+            minX: minX,
+            maxX: maxX,
+          )..priority = ep.priority + 1;
+
+          await add(enemy);
+        }
+      }
+
+      // 폭탄 배치
+      final bombPosition = Vector2(
+        lastPlatform.position.x + lastPlatform.size.x / 2,
+        lastPlatform.position.y,
+      );
+      bomb = Bomb(bombPosition, onTutorialDisarm: onTutorialDisarm);
+      await add(bomb!);
+
+      // 플레이어 시작 위치
+      final firstPlatform = tutorialPlatforms.first;
+      player.position = Vector2(
+        firstPlatform.position.x + 30,
+        firstPlatform.position.y - 40,
+      );
+      player.initialPosition = player.position.clone();
+
+      _readyCompleter.complete();
+      return;
+    }
     double x = 0;
 
     Platform? lastPlatform;

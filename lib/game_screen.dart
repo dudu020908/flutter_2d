@@ -19,26 +19,18 @@ class GameScreen extends StatelessWidget {
           // 1) 게임 월드
           GameWidget(game: game),
 
-          // 2) 점프 버튼 (앱 실행 전용)
+          // 2) 점프키 패드 (앱 실행 전용)
           if (!kIsWeb)
             Positioned(
               bottom: 30,
               right: 30,
               child: GestureDetector(
                 onTap: () => game.player.jump(),
-                child: Container(
-                  width: 70,
-                  height: 70,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.blue.withOpacity(0.8),
-                  ),
-                  child: const Icon(Icons.arrow_upward, color: Colors.white),
-                ),
+                child: _keyCap(Icons.keyboard_arrow_up),
               ),
             ),
 
-          // 3) 방향키 패드 (앱 전용)
+          // 3) 방향키 패드,좌,우,해체 (앱 전용)
           if (!kIsWeb)
             Align(
               alignment: Alignment.bottomLeft,
@@ -48,19 +40,6 @@ class GameScreen extends StatelessWidget {
                   defaultColumnWidth: const FixedColumnWidth(keyWidth),
                   defaultVerticalAlignment: TableCellVerticalAlignment.middle,
                   children: [
-                    // 첫째 행: [빈칸, ↑ 해체, 빈칸]
-                    TableRow(
-                      children: [
-                        const SizedBox(),
-                        GestureDetector(
-                          onTapDown: (_) => game.isHoldingBomb = true,
-                          onTapUp: (_) => game.isHoldingBomb = false,
-                          onTapCancel: () => game.isHoldingBomb = false,
-                          child: _keyCap(Icons.keyboard_arrow_up),
-                        ),
-                        const SizedBox(),
-                      ],
-                    ),
                     // 둘째 행: [←, ↓, →]
                     TableRow(
                       children: [
@@ -71,11 +50,9 @@ class GameScreen extends StatelessWidget {
                           child: _keyCap(Icons.keyboard_arrow_left),
                         ),
                         GestureDetector(
-                          onTapDown: (_) {
-                            /* duck 로직 등 */
-                          },
-                          onTapUp: (_) => {},
-                          onTapCancel: () => {},
+                          onTapDown: (_) => game.isHoldingBomb = true,
+                          onTapUp: (_) => game.isHoldingBomb = false,
+                          onTapCancel: () => game.isHoldingBomb = false,
                           child: _keyCap(Icons.keyboard_arrow_down),
                         ),
                         GestureDetector(

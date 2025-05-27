@@ -123,7 +123,7 @@ class _TutorialScreenState extends State<TutorialScreen> {
           Colors.green.withOpacity(0.8),
         );
       } else if (_showBombInstr) {
-        final bombText = kIsWeb ? 'F키로 폭탄 해체' : '↑ 버튼으로 폭탄 해체';
+        final bombText = kIsWeb ? 'F키로 폭탄 해체' : '↓ 버튼으로 폭탄 해체';
         tutorialStep = _msg(guideTop, bombText, Colors.black54);
       }
     }
@@ -154,16 +154,8 @@ class _TutorialScreenState extends State<TutorialScreen> {
                 onTap: () {
                   _game.player.jump();
                   _game.player.tutorialJumps++;
-                },
-                child: Container(
-                  width: 70,
-                  height: 70,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.blue.withOpacity(0.8),
-                  ),
-                  child: const Icon(Icons.arrow_upward, color: Colors.white),
-                ),
+                }, // ← 이게 핵심
+                child: _keyCap(Icons.keyboard_arrow_up),
               ),
             ),
 
@@ -177,20 +169,7 @@ class _TutorialScreenState extends State<TutorialScreen> {
                   defaultColumnWidth: const FixedColumnWidth(keyWidth),
                   defaultVerticalAlignment: TableCellVerticalAlignment.middle,
                   children: [
-                    // 위 방향키
-                    TableRow(
-                      children: [
-                        const SizedBox(),
-                        GestureDetector(
-                          onTapDown: (_) => _game.isHoldingBomb = true,
-                          onTapUp: (_) => _game.isHoldingBomb = false,
-                          onTapCancel: () => _game.isHoldingBomb = false,
-                          child: _keyCap(Icons.keyboard_arrow_up),
-                        ),
-                        const SizedBox(),
-                      ],
-                    ),
-                    // 왼쪽,아래,오른쪽 방향키
+                    // 둘째 행: [←, ↓, →]
                     TableRow(
                       children: [
                         GestureDetector(
@@ -203,11 +182,9 @@ class _TutorialScreenState extends State<TutorialScreen> {
                           child: _keyCap(Icons.keyboard_arrow_left),
                         ),
                         GestureDetector(
-                          onTapDown: (_) {
-                            /* duck 로직 */
-                          },
-                          onTapUp: (_) => {},
-                          onTapCancel: () => {},
+                          onTapDown: (_) => _game.isHoldingBomb = true,
+                          onTapUp: (_) => _game.isHoldingBomb = false,
+                          onTapCancel: () => _game.isHoldingBomb = false,
                           child: _keyCap(Icons.keyboard_arrow_down),
                         ),
                         GestureDetector(
