@@ -3,6 +3,7 @@ import 'dart:math';
 
 import 'package:flame/components.dart';
 
+import 'obstacle.dart';
 import 'platform.dart';
 
 class VanishingPlatform extends Platform {
@@ -13,16 +14,28 @@ class VanishingPlatform extends Platform {
   final Vector2 originalPosition;
   final Vector2 originalSize;
   final World world;
+  final List<Obstacle> _initialObstacles = [];
 
-  VanishingPlatform(Vector2 position, Vector2 size, this.world)
-    : originalPosition = position.clone(),
-      originalSize = size.clone(),
-      super(position, size);
+  VanishingPlatform(
+    Vector2 position,
+    Vector2 size,
+    this.world, {
+    List<Obstacle> obstacles = const [],
+  }) : originalPosition = position.clone(),
+       originalSize = size.clone(),
+       super(position, size) {
+    _initialObstacles.addAll(obstacles.map((o) => o.clone()));
+  }
 
   @override
   Future<void> onLoad() async {
     await super.onLoad();
     sprite.sprite = await gameRef.loadSprite('vanishing_platform.png');
+
+    // Obstacle을 초기 자식으로 등록
+    for (final o in _initialObstacles) {
+      add(o.clone());
+    }
   }
 
   @override
@@ -53,23 +66,26 @@ class VanishingPlatform extends Platform {
   void onPlayerLeave() {
     playerOn = false;
     timeOnPlatform = 0.0;
-    sprite.opacity = 1.0; // 플레이어가 떠나면 원래 투명도로 복구
+    sprite.opacity = 1.0;
   }
 
   void vanish() {
     isVanished = true;
-    sprite.opacity = 1.0; // 사라질 때 다시 원래 상태로 복구
+    sprite.opacity = 1.0;
 
+    final savedObstacles = _initialObstacles.map((o) => o.clone()).toList();
     final myWorld = world;
+
     removeFromParent();
 
-    async.Timer(const Duration(seconds: 3), () {
+    async.Timer(const Duration(seconds: 3), () async {
       final replatform = VanishingPlatform(
         originalPosition.clone(),
         originalSize.clone(),
         myWorld,
+        obstacles: savedObstacles,
       );
-      myWorld.add(replatform);
+      await myWorld.add(replatform);
     });
   }
 }

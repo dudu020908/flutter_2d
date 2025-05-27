@@ -179,10 +179,22 @@ class GameWorld extends World {
           enemyBaseSize: Vector2(screenSize.x * 0.02, screenSize.y * 0.03),
         );
       } else if (i == vanishingIndex) {
+        Obstacle? obstacle;
+        if (i % 5 == 4 && i != 29) {
+          final double obstacleWidth = screenSize.x * 0.02;
+          final double obstacleHeight =
+              screenSize.y * (0.04 + rng.nextDouble() * 0.01);
+
+          obstacle = Obstacle(
+            Vector2(platformWidth / 2 - obstacleWidth / 2, -obstacleHeight),
+            Vector2(obstacleWidth, obstacleHeight),
+          );
+        }
         platform = VanishingPlatform(
           Vector2(x, platformY),
           Vector2(platformWidth, platformHeight),
           this,
+          obstacles: obstacle != null ? [obstacle] : [],
         );
       } else if (movingIndices.contains(i)) {
         platform = MovingPlatform(
@@ -226,18 +238,17 @@ class GameWorld extends World {
 
       // 장애물은 5개마다 배치
       // 장애물은 5개마다 배치하되, 마지막 플랫폼(폭탄 위치)에는 제외
-      if (i % 5 == 4 && i != 29) {
+      if (i % 5 == 4 && i != 29 && platform is! VanishingPlatform) {
         final double obstacleWidth = screenSize.x * 0.02;
         final double obstacleHeight =
-            screenSize.y * (0.03 + rng.nextDouble() * 0.01);
+            screenSize.y * (0.04 + rng.nextDouble() * 0.01);
         final double obstacleY = platformY - obstacleHeight;
 
-        await add(
-          Obstacle(
-            Vector2(x + platformWidth / 2 - obstacleWidth / 2, obstacleY),
-            Vector2(obstacleWidth, obstacleHeight),
-          ),
+        final obstacle = Obstacle(
+          Vector2(platformWidth / 2 - obstacleWidth / 2, 0), // 자식 기준 좌표
+          Vector2(obstacleWidth, obstacleHeight),
         );
+        platform.add(obstacle);
       }
 
       x += platformWidth + gap;

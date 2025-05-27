@@ -78,6 +78,7 @@ flutter:
     - assets/images/platform.png
     - assets/images/moving_platform.png
     - assets/images/vanishing_platform.png
+    - assets/images/obstacle.png
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.
