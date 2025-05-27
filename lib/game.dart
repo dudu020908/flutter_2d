@@ -58,6 +58,7 @@ class MyPlatformerGame extends FlameGame
     KeyEvent event,
     Set<LogicalKeyboardKey> keysPressed,
   ) {
+    super.onKeyEvent(event, keysPressed);
     this.keysPressed = keysPressed;
     _player.handleKeyEvent(event, keysPressed);
     return KeyEventResult.handled;

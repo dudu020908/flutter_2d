@@ -242,7 +242,6 @@ class GameWorld extends World {
         final double obstacleWidth = screenSize.x * 0.02;
         final double obstacleHeight =
             screenSize.y * (0.04 + rng.nextDouble() * 0.01);
-        final double obstacleY = platformY - obstacleHeight;
 
         final obstacle = Obstacle(
           Vector2(platformWidth / 2 - obstacleWidth / 2, 0), // 자식 기준 좌표

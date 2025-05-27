@@ -102,7 +102,11 @@ class Bomb extends PositionComponent with HasGameRef<MyPlatformerGame> {
     await gameRef.player.jumpToBomb(position);
     await Future.delayed(const Duration(milliseconds: 300));
 
-    final clutchText = ClutchText(Vector2(0, -120));
+    final clutchText = FloatingText(
+      content: 'CLUTCH!',
+      color: Colors.redAccent,
+      offset: Vector2(0, -120),
+    );
     await gameRef.add(clutchText);
 
     clutchText.addAll([
@@ -141,33 +145,12 @@ class Bomb extends PositionComponent with HasGameRef<MyPlatformerGame> {
 
   void onTimerExpired() {
     if (isDisarmed) return;
-
     timerText.removeFromParent();
-    disarmGauge.removeFromParent();
-    print('⏰ 제한시간 초과 - 폭탄 폭발!');
-
-    final boomText =
-        TextComponent(
-            text: 'GameOver!',
-            textRenderer: TextPaint(
-              style: const TextStyle(
-                fontSize: 60,
-                color: Colors.orange,
-                fontWeight: FontWeight.bold,
-                shadows: [
-                  Shadow(
-                    blurRadius: 10,
-                    color: Colors.black,
-                    offset: Offset(3, 3),
-                  ),
-                ],
-              ),
-            ),
-          )
-          ..anchor = Anchor.center
-          ..position = gameRef.size / 2 + Vector2(0, -180)
-          ..priority = 200;
-
+    final boomText = FloatingText(
+      content: 'GameOver!',
+      color: Colors.orange,
+      offset: Vector2(0, -120),
+    );
     gameRef.add(boomText);
 
     gameRef.add(
@@ -269,27 +252,34 @@ class DisarmGauge extends Component with HasGameRef<MyPlatformerGame> {
   int get priority => 999;
 }
 
-// ✅ 클러치 텍스트
-class ClutchText extends TextComponent with HasGameRef<MyPlatformerGame> {
+class FloatingText extends TextComponent with HasGameRef<MyPlatformerGame> {
+  final String content;
+  final Color color;
   final Vector2 offset;
 
-  ClutchText(this.offset)
-    : super(
-        text: 'CLUTCH!',
-        textRenderer: TextPaint(
-          style: const TextStyle(
-            fontSize: 60,
-            color: Colors.redAccent,
-            fontWeight: FontWeight.w900,
-            shadows: [
-              Shadow(blurRadius: 10, color: Colors.black, offset: Offset(3, 3)),
-            ],
-          ),
-        ),
-      ) {
-    anchor = Anchor.center;
-    priority = 100;
-  }
+  FloatingText({
+    required this.content,
+    required this.color,
+    required this.offset,
+  }) : super(
+         text: content,
+         anchor: Anchor.center,
+         priority: 200,
+         textRenderer: TextPaint(
+           style: TextStyle(
+             fontSize: 60,
+             color: color,
+             fontWeight: FontWeight.bold,
+             shadows: const [
+               Shadow(
+                 blurRadius: 10,
+                 color: Colors.black,
+                 offset: Offset(3, 3),
+               ),
+             ],
+           ),
+         ),
+       );
 
   @override
   Future<void> onLoad() async {
