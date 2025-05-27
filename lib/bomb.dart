@@ -61,7 +61,6 @@ class Bomb extends PositionComponent with HasGameRef<MyPlatformerGame> {
     if (isHolding) {
       heldDuration += dt;
 
-      // 게이지 보이게 + 진행도 계산
       disarmGauge
         ..visible = true
         ..progress = (heldDuration / 4.0).clamp(0.0, 1.0);
@@ -69,9 +68,8 @@ class Bomb extends PositionComponent with HasGameRef<MyPlatformerGame> {
       if (heldDuration > 4.0) heldDuration = 4.0;
 
       final progress = (heldDuration / 4.0).clamp(0.0, 1.0);
-      final frame = (progress * 7).floor(); // 0~7 → bomb_1~bomb_8
+      final frame = (progress * 7).floor();
 
-      // 프레임에 맞는 스프라이트 교체
       gameRef.loadSprite('bomb_${frame + 1}.png').then((sprite) {
         bombSprite.sprite = sprite;
       });
@@ -81,7 +79,6 @@ class Bomb extends PositionComponent with HasGameRef<MyPlatformerGame> {
         disarm();
       }
     } else {
-      // 해제 취소 상태
       heldDuration = 0;
       disarmGauge
         ..visible = false
@@ -190,31 +187,28 @@ class Bomb extends PositionComponent with HasGameRef<MyPlatformerGame> {
   }
 }
 
+// ✅ Timer 텍스트
 class BombTimerText extends TextComponent with HasGameRef<MyPlatformerGame> {
   double remaining;
-  late TextComponent textComp;
-  BombTimerText({required this.remaining});
+
+  BombTimerText({required this.remaining})
+    : super(
+        text: 'Time: ${remaining.toInt()}',
+        anchor: Anchor.topCenter,
+        textRenderer: TextPaint(
+          style: const TextStyle(
+            fontSize: 24,
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            shadows: [Shadow(blurRadius: 4, color: Colors.black)],
+          ),
+        ),
+      );
 
   @override
   Future<void> onLoad() async {
     position = Vector2(gameRef.size.x / 2, 20);
-    anchor = Anchor.topCenter;
     priority = 999;
-
-    textComp = TextComponent(
-      text: 'Time: ${remaining.toInt()}',
-      anchor: Anchor.center,
-      textRenderer: TextPaint(
-        style: const TextStyle(
-          fontSize: 24,
-          color: Colors.white,
-          fontWeight: FontWeight.bold,
-          shadows: [Shadow(blurRadius: 4, color: Colors.black)],
-        ),
-      ),
-    );
-
-    await add(textComp);
   }
 
   @override
@@ -222,8 +216,7 @@ class BombTimerText extends TextComponent with HasGameRef<MyPlatformerGame> {
     super.update(dt);
     remaining -= dt;
     if (remaining < 0) remaining = 0;
-    textComp.text = 'Time: ${remaining.toInt()}';
-    position = Vector2(gameRef.size.x / 2, 20);
+    text = 'Time: ${remaining.toInt()}';
   }
 
   @override
@@ -233,32 +226,31 @@ class BombTimerText extends TextComponent with HasGameRef<MyPlatformerGame> {
   }
 }
 
-class DisarmGauge extends PositionComponent with HasGameRef<MyPlatformerGame> {
+// ✅ 해체 게이지
+class DisarmGauge extends Component with HasGameRef<MyPlatformerGame> {
   double progress = 0.0;
   bool visible = false;
 
+  late Rect bgRect;
+  late Rect fgRect;
+  final double gaugeHeight = 10.0;
+
+  @override
+  void onGameResize(Vector2 size) {
+    super.onGameResize(size);
+    final gaugeWidth = size.x * 0.5;
+    final left = (size.x - gaugeWidth) / 2;
+    bgRect = Rect.fromLTWH(left, 50, gaugeWidth, gaugeHeight);
+    fgRect = Rect.fromLTWH(left, 50, gaugeWidth * progress, gaugeHeight);
+  }
+
   @override
   void render(Canvas canvas) {
-    if (!visible) return; // ❗이걸 꼭 넣어줘야 평소에 안 보임
+    if (!visible) return;
 
-    super.render(canvas);
-
-    final gaugeWidth = gameRef.size.x * 0.5;
-    final gaugeHeight = 10.0;
-
-    final bgRect = Rect.fromLTWH(
-      (gameRef.size.x - gaugeWidth) / 2,
-      50,
-      gaugeWidth,
-      gaugeHeight,
-    );
-
-    final fgRect = Rect.fromLTWH(
-      (gameRef.size.x - gaugeWidth) / 2,
-      50,
-      gaugeWidth * progress,
-      gaugeHeight,
-    );
+    // 업데이트된 전경 길이
+    final fgWidth = bgRect.width * progress;
+    fgRect = Rect.fromLTWH(bgRect.left, bgRect.top, fgWidth, gaugeHeight);
 
     final bgPaint = Paint()..color = Colors.grey.shade700;
     final fgPaint = Paint()..color = Colors.greenAccent;
@@ -274,19 +266,10 @@ class DisarmGauge extends PositionComponent with HasGameRef<MyPlatformerGame> {
   }
 
   @override
-  void update(double dt) {
-    super.update(dt);
-  }
-
-  @override
-  void onGameResize(Vector2 size) {
-    super.onGameResize(size);
-  }
-
-  @override
   int get priority => 999;
 }
 
+// ✅ 클러치 텍스트
 class ClutchText extends TextComponent with HasGameRef<MyPlatformerGame> {
   final Vector2 offset;
 
@@ -306,6 +289,11 @@ class ClutchText extends TextComponent with HasGameRef<MyPlatformerGame> {
       ) {
     anchor = Anchor.center;
     priority = 100;
+  }
+
+  @override
+  Future<void> onLoad() async {
+    position = gameRef.size / 2 + offset;
   }
 
   @override
