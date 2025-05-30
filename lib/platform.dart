@@ -23,7 +23,6 @@ class Platform extends PositionComponent
           ..size = Vector2(size.x, size.y)
           ..anchor = Anchor.centerLeft
           ..position = Vector2.zero();
-
     add(sprite);
 
     add(

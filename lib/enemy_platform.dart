@@ -17,12 +17,6 @@ class EnemyPlatform extends Platform {
     sprite.sprite = await gameRef.loadSprite('platform.png');
 
     // 2) 충돌용 히트박스
-    add(
-      RectangleHitbox(
-        size: size,
-        anchor: Anchor.center,
-        collisionType: CollisionType.passive,
-      ),
-    );
+    add(RectangleHitbox(size: size, collisionType: CollisionType.passive));
   }
 }

@@ -2,6 +2,7 @@ import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
 import 'package:flame/effects.dart';
 import 'package:flutter/material.dart';
+import 'package:my_platformer_game/config.dart';
 
 import 'game.dart';
 import 'main_menu_screen.dart';
@@ -35,7 +36,7 @@ class Bomb extends PositionComponent with HasGameRef<MyPlatformerGame> {
 
       add(bombSprite);
 
-      timerText = BombTimerText(remaining: 60);
+      timerText = BombTimerText(remaining: GameConfig.bombTimerSeconds);
       await gameRef.add(timerText);
 
       disarmGauge = DisarmGauge();
@@ -43,7 +44,7 @@ class Bomb extends PositionComponent with HasGameRef<MyPlatformerGame> {
 
       await gameRef.add(
         TimerComponent(
-          period: 60,
+          period: GameConfig.bombTimerSeconds,
           removeOnFinish: true,
           onTick: onTimerExpired,
         ),

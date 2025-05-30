@@ -158,14 +158,22 @@ class Player extends SpriteAnimationComponent
     if (other is Platform && velocityY > 0) {
       final bottom = position.y + size.y / 2;
       final platformTop = other.position.y - (other.size.y / 2);
-      final correction = bottom - platformTop;
-      position.y -= correction;
-      velocityY = 0;
-      isOnGround = true;
-      currentPlatform = other;
-      if (other is VanishingPlatform) {
-        other.onPlayerTouch();
+      final isFalling = velocityY > 0;
+      final isAbovePlatform = bottom <= platformTop + 10; // 여유 여백
+
+      if (isFalling && isAbovePlatform) {
+        // 충돌 인정
+        final correction = bottom - platformTop;
+        position.y -= correction;
+        velocityY = 0;
+        isOnGround = true;
+        currentPlatform = other;
+
+        if (other is VanishingPlatform) {
+          other.onPlayerTouch();
+        }
       }
+      // 그 외 (옆에서 접근 등): 무시
     }
 
     if (other is Obstacle) {

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:my_platformer_game/settings_screen.dart';
 
 import 'game_screen.dart';
 import 'tutorial_screen.dart';
@@ -121,7 +122,21 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
                   onExit: (_) => _onHover(false, 'settings'),
                   child: GestureDetector(
                     onTap: () {
-                      // 설정 기능 예정
+                      showDialog(
+                        context: context,
+                        builder:
+                            (context) => AlertDialog(
+                              backgroundColor: Colors.black87,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(15),
+                              ),
+                              title: const Text(
+                                '제한시간 설정',
+                                style: TextStyle(color: Colors.white),
+                              ),
+                              content: SettingsContent(), // 아래에서 따로 구현
+                            ),
+                      );
                     },
                     child: AnimatedScale(
                       scale: _scaleSettings,
@@ -131,12 +146,12 @@ class _MainMenuScreenState extends State<MainMenuScreen> {
                         style: TextStyle(
                           fontSize: 30,
                           fontWeight: FontWeight.w500,
-                          color: Colors.white70,
+                          color: Colors.greenAccent,
                           shadows: [
                             Shadow(
                               offset: Offset(1, 1),
                               blurRadius: 3,
-                              color: Colors.black26,
+                              color: Colors.black,
                             ),
                           ],
                         ),

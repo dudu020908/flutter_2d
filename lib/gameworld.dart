@@ -138,7 +138,7 @@ class GameWorld extends World {
       final firstPlatform = tutorialPlatforms.first;
       player.position = Vector2(
         firstPlatform.position.x + 30,
-        firstPlatform.position.y - 40,
+        firstPlatform.position.y - 120,
       );
       player.initialPosition = player.position.clone();
 
