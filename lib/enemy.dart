@@ -7,6 +7,7 @@ import 'package:flame/game.dart';
 class Enemy extends PositionComponent
     with CollisionCallbacks, HasGameRef<FlameGame> {
   final Vector2 initialPosition;
+  final double baseSpeed;
   final double speed;
 
   /// Enemy가 왔다 갔다 할 X 범위
@@ -14,13 +15,16 @@ class Enemy extends PositionComponent
   final double maxX;
   double _dir = 1;
 
+  late final Sprite _rightSprite;
+  late final Sprite _leftSprite;
+
   Enemy({
     required Vector2 position,
     required Vector2 baseSize,
     required this.minX,
     required this.maxX,
-    this.speed = 100,
-  }) : initialPosition = position.clone(),
+    double initialSpeed = 100,
+  }) : initialPosition = position.clone(), baseSpeed = initialSpeed, speed = initialSpeed,
        super(position: position, size: baseSize * 2, anchor: Anchor.center);
 
   @override

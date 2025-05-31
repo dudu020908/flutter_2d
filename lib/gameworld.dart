@@ -149,6 +149,11 @@ class GameWorld extends World {
 
     Platform? lastPlatform;
 
+    final enemyIndices = <int>{};
+    while (enemyIndices.length < 3) {
+      enemyIndices.add(rng.nextInt(28) + 1);
+    }
+
     // 미리 지정된 특별 플랫폼 인덱스
     final vanishingIndex = rng.nextInt(30);
     List<int> movingIndices = [];
@@ -172,8 +177,7 @@ class GameWorld extends World {
       final double gap = screenSize.x * (0.04 + rng.nextDouble() * 0.08);
 
       Platform platform;
-      if (i == 1) {
-        // **두 번째 플랫폼**: ObstaclePlatform
+      if (enemyIndices.contains(i)) {
         platform = EnemyPlatform(
           Vector2(x, platformY),
           enemyBaseSize: Vector2(screenSize.x * 0.02, screenSize.y * 0.03),
@@ -230,6 +234,29 @@ class GameWorld extends World {
         )..priority = ep.priority + 1;
 
         await add(enemy);
+      }
+
+      // --- EnemyPlatform 위에 Enemy 스폰하기 ---
+      if (enemyIndices.contains(i) && platform is EnemyPlatform) {
+        // plat 을 EnemyPlatform 으로 캐스트
+        final ep = platform as EnemyPlatform;
+        final worldTopY = ep.position.y - ep.size.y / 2;
+        final enemyH = ep.enemyBaseSize.y * 2;
+        final spawnPos = Vector2(ep.position.x, worldTopY - enemyH / 2);
+
+        final minX = ep.position.x - ep.size.x / 2;
+        final maxX = ep.position.x + ep.size.x / 2;
+
+        final enemy = Enemy(
+          position: spawnPos,
+          baseSize: ep.enemyBaseSize,
+          minX: minX,
+          maxX: maxX,
+        )..priority = ep.priority + 1;
+
+        await add(enemy);
+
+        ep.attachEnemy(enemy);
       }
 
       if (i == 29) {
