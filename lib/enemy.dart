@@ -4,11 +4,11 @@ import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
 import 'package:flame/game.dart';
 
-class Enemy extends PositionComponent
+class Enemy extends SpriteComponent
     with CollisionCallbacks, HasGameRef<FlameGame> {
   final Vector2 initialPosition;
   final double baseSpeed;
-  final double speed;
+  double speed;
 
   /// Enemy가 왔다 갔다 할 X 범위
   final double minX;
@@ -30,13 +30,18 @@ class Enemy extends PositionComponent
   @override
   Future<void> onLoad() async {
     await super.onLoad();
+
+    _rightSprite = await gameRef.loadSprite('enemy_1.png');
+    _leftSprite = await gameRef.loadSprite('enemy_2.png');
+
+    sprite = _rightSprite;
+
     add(RectangleHitbox());
   }
 
   @override
   void render(Canvas canvas) {
     super.render(canvas);
-    canvas.drawRect(size.toRect(), Paint()..color = const Color(0xFFFFA500));
   }
 
   @override
@@ -44,6 +49,8 @@ class Enemy extends PositionComponent
     super.update(dt);
     // 좌우 왕복
     position.x += speed * dt * _dir;
+
+    sprite = (_dir > 0) ? _rightSprite : _leftSprite;
 
     // 경계에 닿으면 방향 반전
     if (position.x - size.x / 2 <= minX) {
