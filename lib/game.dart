@@ -22,6 +22,7 @@ class MyPlatformerGame extends FlameGame
   late final Player _player;
   late final GameWorld _gameWorld;
   late final Background _background;
+  int attemptCount = 0;
   Bomb? bomb;
   Set<LogicalKeyboardKey> keysPressed = {};
 

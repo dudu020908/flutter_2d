@@ -3,9 +3,9 @@ import 'package:flame/components.dart';
 import 'package:flame/effects.dart';
 import 'package:flutter/material.dart';
 import 'package:my_platformer_game/config.dart';
+import 'result_screen.dart';
 
 import 'game.dart';
-import 'main_menu_screen.dart';
 
 class Bomb extends PositionComponent with HasGameRef<MyPlatformerGame> {
   double heldDuration = 0;
@@ -24,34 +24,30 @@ class Bomb extends PositionComponent with HasGameRef<MyPlatformerGame> {
   @override
   Future<void> onLoad() async {
     super.onLoad();
-    try {
-      final sprite = await gameRef.loadSprite('bomb_1.png');
-      final characterSize = gameRef.size.x * 0.08;
-      final bombSize = characterSize;
-      bombSprite = SpriteComponent(
-        sprite: sprite,
-        size: Vector2(bombSize, bombSize * 1.2),
-        anchor: Anchor.bottomCenter,
-      );
+    final sprite = await gameRef.loadSprite('bomb_1.png');
+    final characterSize = gameRef.size.x * 0.08;
+    final bombSize = characterSize;
 
-      add(bombSprite);
+    bombSprite = SpriteComponent(
+      sprite: sprite,
+      size: Vector2(bombSize, bombSize * 1.2),
+      anchor: Anchor.bottomCenter,
+    );
+    add(bombSprite);
 
-      timerText = BombTimerText(remaining: GameConfig.bombTimerSeconds);
-      await gameRef.add(timerText);
+    timerText = BombTimerText(remaining: GameConfig.bombTimerSeconds);
+    await gameRef.add(timerText);
 
-      disarmGauge = DisarmGauge();
-      await gameRef.add(disarmGauge);
+    disarmGauge = DisarmGauge();
+    await gameRef.add(disarmGauge);
 
-      await gameRef.add(
-        TimerComponent(
-          period: GameConfig.bombTimerSeconds,
-          removeOnFinish: true,
-          onTick: onTimerExpired,
-        ),
-      );
-    } catch (e) {
-      print('❌ bomb sprite load failed: $e');
-    }
+    await gameRef.add(
+      TimerComponent(
+        period: GameConfig.bombTimerSeconds,
+        removeOnFinish: true,
+        onTick: onTimerExpired,
+      ),
+    );
 
     add(RectangleHitbox());
   }
@@ -66,7 +62,10 @@ class Bomb extends PositionComponent with HasGameRef<MyPlatformerGame> {
         ..visible = true
         ..progress = (heldDuration / 4.0).clamp(0.0, 1.0);
 
-      if (heldDuration > 4.0) heldDuration = 4.0;
+      if (heldDuration >= 4.0) {
+        disarmGauge.visible = false;
+        disarm();
+      }
 
       final progress = (heldDuration / 4.0).clamp(0.0, 1.0);
       final frame = (progress * 7).floor();
@@ -74,11 +73,6 @@ class Bomb extends PositionComponent with HasGameRef<MyPlatformerGame> {
       gameRef.loadSprite('bomb_${frame + 1}.png').then((sprite) {
         bombSprite.sprite = sprite;
       });
-
-      if (heldDuration >= 4.0) {
-        disarmGauge.visible = false;
-        disarm();
-      }
     } else {
       heldDuration = 0;
       disarmGauge
@@ -95,6 +89,8 @@ class Bomb extends PositionComponent with HasGameRef<MyPlatformerGame> {
     if (isDisarmed) return;
     isDisarmed = true;
 
+    gameRef.attemptCount++;
+
     removeFromParent();
     timerText.removeFromParent();
     disarmGauge.removeFromParent();
@@ -103,7 +99,7 @@ class Bomb extends PositionComponent with HasGameRef<MyPlatformerGame> {
     await gameRef.player.jumpToBomb(position);
     await Future.delayed(const Duration(milliseconds: 300));
 
-    final clutchText = FloatingText(
+    final clutchText = ClutchText(
       content: 'CLUTCH!',
       color: Colors.redAccent,
       offset: Vector2(0, -120),
@@ -124,21 +120,18 @@ class Bomb extends PositionComponent with HasGameRef<MyPlatformerGame> {
       RemoveEffect(delay: 1.6),
     ]);
 
-    if (onTutorialDisarm != null) {
-      onTutorialDisarm!();
-    } else {
-      gameRef.add(
-        TimerComponent(
-          period: 2.5,
-          removeOnFinish: true,
-          onTick: () {
-            final ctx = gameRef.buildContext;
-            if (ctx != null) {
-              Navigator.of(ctx).pushReplacement(
-                MaterialPageRoute(builder: (_) => const MainMenuScreen()),
-              );
-            }
-          },
+    await Future.delayed(const Duration(seconds: 2));
+
+    // ✅ 결과 화면으로 전환
+    final ctx = gameRef.buildContext;
+    if (ctx != null) {
+      Navigator.of(ctx).pushReplacement(
+        MaterialPageRoute(
+          builder:
+              (_) => ResultScreen(
+                clearTime: 60 - timerText.remaining,
+                attemptCount: gameRef.attemptCount,
+              ),
         ),
       );
     }
@@ -147,31 +140,19 @@ class Bomb extends PositionComponent with HasGameRef<MyPlatformerGame> {
   void onTimerExpired() {
     if (isDisarmed) return;
     timerText.removeFromParent();
-    final boomText = FloatingText(
-      content: 'GameOver!',
-      color: Colors.orange,
-      offset: Vector2(0, -120),
-    );
-    gameRef.add(boomText);
 
-    gameRef.add(
-      TimerComponent(
-        period: 2,
-        removeOnFinish: true,
-        onTick: () {
-          final ctx = gameRef.buildContext;
-          if (ctx != null) {
-            Navigator.of(ctx).pushReplacement(
-              MaterialPageRoute(builder: (_) => const MainMenuScreen()),
-            );
-          }
-        },
-      ),
-    );
+    disarmGauge.removeFromParent();
+    print('⏰ 제한시간 초과 - 폭탄 폭발!');
+
+    final ctx = gameRef.buildContext;
+    if (ctx != null) {
+      Navigator.of(ctx).pushReplacement(
+        MaterialPageRoute(builder: (_) => const ResultScreen(isGameOver: true)),
+      );
+    }
   }
 }
 
-// ✅ Timer 텍스트
 class BombTimerText extends TextComponent with HasGameRef<MyPlatformerGame> {
   double remaining;
 
@@ -210,7 +191,6 @@ class BombTimerText extends TextComponent with HasGameRef<MyPlatformerGame> {
   }
 }
 
-// ✅ 해체 게이지
 class DisarmGauge extends Component with HasGameRef<MyPlatformerGame> {
   double progress = 0.0;
   bool visible = false;
@@ -232,7 +212,6 @@ class DisarmGauge extends Component with HasGameRef<MyPlatformerGame> {
   void render(Canvas canvas) {
     if (!visible) return;
 
-    // 업데이트된 전경 길이
     final fgWidth = bgRect.width * progress;
     fgRect = Rect.fromLTWH(bgRect.left, bgRect.top, fgWidth, gaugeHeight);
 
@@ -253,34 +232,27 @@ class DisarmGauge extends Component with HasGameRef<MyPlatformerGame> {
   int get priority => 999;
 }
 
-class FloatingText extends TextComponent with HasGameRef<MyPlatformerGame> {
+class ClutchText extends TextComponent with HasGameRef<MyPlatformerGame> {
   final String content;
   final Color color;
   final Vector2 offset;
 
-  FloatingText({
-    required this.content,
-    required this.color,
-    required this.offset,
-  }) : super(
-         text: content,
-         anchor: Anchor.center,
-         priority: 200,
-         textRenderer: TextPaint(
-           style: TextStyle(
-             fontSize: 60,
-             color: color,
-             fontWeight: FontWeight.bold,
-             shadows: const [
-               Shadow(
-                 blurRadius: 10,
-                 color: Colors.black,
-                 offset: Offset(3, 3),
-               ),
-             ],
-           ),
-         ),
-       );
+  ClutchText({required this.content, required this.color, required this.offset})
+    : super(
+        text: content,
+        anchor: Anchor.center,
+        priority: 200,
+        textRenderer: TextPaint(
+          style: TextStyle(
+            fontSize: 60,
+            color: color,
+            fontWeight: FontWeight.bold,
+            shadows: const [
+              Shadow(blurRadius: 10, color: Colors.black, offset: Offset(3, 3)),
+            ],
+          ),
+        ),
+      );
 
   @override
   Future<void> onLoad() async {

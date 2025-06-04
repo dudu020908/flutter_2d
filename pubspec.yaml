@@ -37,6 +37,7 @@ dependencies:
   flame: ^1.27.0
   flame_audio: ^2.11.3
   flame_forge2d: ^0.18.3+1
+  google_fonts: ^6.1.0
 
 dev_dependencies:
   flutter_test:
@@ -66,6 +67,13 @@ flutter:
     - assets/images/player3_2.png
     - assets/images/player3_3.png
     - assets/images/player3_4.png
+    - assets/images/player3_5.png
+    - assets/images/jump_0.png
+    - assets/images/jump_1.png
+    - assets/images/jump_2.png
+    - assets/images/jump_3.png
+    - assets/images/jump_4.png
+    - assets/images/WingmanDefuse.gif
     - assets/images/intro.gif
     - assets/images/bomb_1.png
     - assets/images/bomb_2.png
@@ -81,6 +89,7 @@ flutter:
     - assets/images/obstacle.png
     - assets/images/enemy_1.png
     - assets/images/enemy_2.png
+
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.
